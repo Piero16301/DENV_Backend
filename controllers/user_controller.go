@@ -6,6 +6,7 @@ import (
 	"Deteccion_Zonas_Dengue_Backend/responses"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
@@ -58,6 +59,7 @@ func CreateUser() http.HandlerFunc {
 		rw.WriteHeader(http.StatusCreated)
 		response := responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Nuevo usuario creado con éxito")
 	}
 }
 
@@ -72,7 +74,7 @@ func GetAUser() http.HandlerFunc {
 
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&user)
+		err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -83,6 +85,7 @@ func GetAUser() http.HandlerFunc {
 		rw.WriteHeader(http.StatusOK)
 		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Usuario %s leído con éxito\n", userId)
 	}
 }
 
@@ -115,7 +118,7 @@ func EditAUser() http.HandlerFunc {
 
 		update := bson.M{"name": user.Name, "location": user.Location, "title": user.Title}
 
-		result, err := userCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -126,7 +129,7 @@ func EditAUser() http.HandlerFunc {
 		// Actualizar los campos del usuario
 		var updatedUser models.User
 		if result.MatchedCount == 1 {
-			err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedUser)
+			err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&updatedUser)
 
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -139,6 +142,7 @@ func EditAUser() http.HandlerFunc {
 		rw.WriteHeader(http.StatusOK)
 		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedUser}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Datos del usuario %s modificados con éxito\n", userId)
 	}
 }
 
@@ -151,7 +155,7 @@ func DeleteAUser() http.HandlerFunc {
 		defer cancel()
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		result, err := userCollection.DeleteOne(ctx, bson.M{"id": objId})
+		result, err := userCollection.DeleteOne(ctx, bson.M{"_id": objId})
 
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
@@ -170,6 +174,7 @@ func DeleteAUser() http.HandlerFunc {
 		rw.WriteHeader(http.StatusOK)
 		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "User successfully deleted!"}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Usuario %s eliminado con éxito\n", userId)
 	}
 }
 
@@ -208,5 +213,6 @@ func GetAllUser() http.HandlerFunc {
 		rw.WriteHeader(http.StatusOK)
 		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": users}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Usuarios leídos con éxito")
 	}
 }

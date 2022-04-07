@@ -6,7 +6,10 @@ import (
 	"Deteccion_Zonas_Dengue_Backend/responses"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"time"
@@ -57,5 +60,32 @@ func CreatePoint() http.HandlerFunc {
 		rw.WriteHeader(http.StatusCreated)
 		response := responses.PointResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
 		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Nuevo usuario creado con éxito")
+	}
+}
+
+func GetAPoint() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		pointId := params["pointId"]
+		var point models.Point
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(pointId)
+
+		err := pointCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&point)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": point}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Punto %s leído con éxito\n", pointId)
 	}
 }
