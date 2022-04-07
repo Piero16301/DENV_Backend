@@ -14,7 +14,7 @@ func EnvMongoURI() string {
 	if runtime.GOOS == "windows" {
 		err = godotenv.Load(".env")
 	} else {
-		err = godotenv.Load("/home/piero/Golang_Backend/REST_API_MongoDB/.env")
+		err = godotenv.Load("/home/piero/Deteccion_Zonas_Dengue_Backend/.env")
 	}
 
 	if err != nil {
