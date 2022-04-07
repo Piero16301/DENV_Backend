@@ -10,4 +10,5 @@ func PointsRoute(router *mux.Router) {
 	router.HandleFunc("/point/{pointId}", controllers.GetAPoint()).Methods("GET")
 	router.HandleFunc("/point/{pointId}", controllers.EditAPoint()).Methods("PUT")
 	router.HandleFunc("/point/{pointId}", controllers.DeleteAPoint()).Methods("DELETE")
+	router.HandleFunc("/points", controllers.GetAllPoints()).Methods("GET")
 }

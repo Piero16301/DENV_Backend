@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
@@ -184,5 +185,44 @@ func DeleteAPoint() http.HandlerFunc {
 		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Point successfully deleted!"}}
 		_ = json.NewEncoder(rw).Encode(response)
 		fmt.Printf("Punto %s eliminado con éxito\n", pointId)
+	}
+}
+
+func GetAllPoints() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var points []models.Point
+		defer cancel()
+
+		results, err := pointCollection.Find(ctx, bson.M{})
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Lectura de manera óptima de la BD
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singlePoint models.Point
+			if err = results.Decode(&singlePoint); err != nil {
+				rw.WriteHeader(http.StatusInternalServerError)
+				response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+				_ = json.NewEncoder(rw).Encode(response)
+			}
+
+			points = append(points, singlePoint)
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": points}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Puntos leídos con éxito")
 	}
 }

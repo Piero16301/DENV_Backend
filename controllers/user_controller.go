@@ -198,7 +198,7 @@ func GetAllUser() http.HandlerFunc {
 			return
 		}
 
-		// Leer de manera óptima la BD
+		// Lectura de manera óptima de la BD
 		defer func(results *mongo.Cursor, ctx context.Context) {
 			_ = results.Close(ctx)
 		}(results, ctx)
