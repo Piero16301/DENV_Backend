@@ -89,3 +89,67 @@ func GetAPoint() http.HandlerFunc {
 		fmt.Printf("Punto %s leído con éxito\n", pointId)
 	}
 }
+
+func EditAPoint() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		pointId := params["pointId"]
+		var point models.Point
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(pointId)
+
+		// Validar el body del request
+		if err := json.NewDecoder(r.Body).Decode(&point); err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			response := responses.PointResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Usar la libreria para validar los campos requeridos
+		if validationErr := validatePoint.Struct(&point); validationErr != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			response := responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		update := bson.M{
+			"comment":   point.Comment,
+			"address":   point.Address,
+			"datetime":  point.DateTime,
+			"photourl":  point.PhotoURL,
+			"latitude":  point.Latitude,
+			"longitude": point.Longitude,
+		}
+
+		result, err := pointCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Actualizar los campos del punto
+		var updatedPoint models.Point
+		if result.MatchedCount == 1 {
+			err := pointCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&updatedPoint)
+
+			if err != nil {
+				rw.WriteHeader(http.StatusInternalServerError)
+				response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+				_ = json.NewEncoder(rw).Encode(response)
+				return
+			}
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedPoint}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Datos del punto %s modificados con éxito\n", pointId)
+	}
+}

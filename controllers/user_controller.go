@@ -116,7 +116,11 @@ func EditAUser() http.HandlerFunc {
 			return
 		}
 
-		update := bson.M{"name": user.Name, "location": user.Location, "title": user.Title}
+		update := bson.M{
+			"name":     user.Name,
+			"location": user.Location,
+			"title":    user.Title,
+		}
 
 		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
 		if err != nil {
