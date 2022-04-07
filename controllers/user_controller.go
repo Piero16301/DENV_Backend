@@ -74,7 +74,7 @@ func GetAUser() http.HandlerFunc {
 
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+		err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&user)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -122,7 +122,7 @@ func EditAUser() http.HandlerFunc {
 			"title":    user.Title,
 		}
 
-		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
+		result, err := userCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -133,7 +133,7 @@ func EditAUser() http.HandlerFunc {
 		// Actualizar los campos del usuario
 		var updatedUser models.User
 		if result.MatchedCount == 1 {
-			err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&updatedUser)
+			err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedUser)
 
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -159,7 +159,7 @@ func DeleteAUser() http.HandlerFunc {
 		defer cancel()
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		result, err := userCollection.DeleteOne(ctx, bson.M{"_id": objId})
+		result, err := userCollection.DeleteOne(ctx, bson.M{"id": objId})
 
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)

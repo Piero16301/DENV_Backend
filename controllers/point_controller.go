@@ -75,7 +75,7 @@ func GetAPoint() http.HandlerFunc {
 
 		objId, _ := primitive.ObjectIDFromHex(pointId)
 
-		err := pointCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&point)
+		err := pointCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&point)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -126,7 +126,7 @@ func EditAPoint() http.HandlerFunc {
 			"longitude": point.Longitude,
 		}
 
-		result, err := pointCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
+		result, err := pointCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -137,7 +137,7 @@ func EditAPoint() http.HandlerFunc {
 		// Actualizar los campos del punto
 		var updatedPoint models.Point
 		if result.MatchedCount == 1 {
-			err := pointCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&updatedPoint)
+			err := pointCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedPoint)
 
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
@@ -151,5 +151,38 @@ func EditAPoint() http.HandlerFunc {
 		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedPoint}}
 		_ = json.NewEncoder(rw).Encode(response)
 		fmt.Printf("Datos del punto %s modificados con éxito\n", pointId)
+	}
+}
+
+func DeleteAPoint() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		pointId := params["pointId"]
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(pointId)
+
+		result, err := pointCollection.DeleteOne(ctx, bson.M{"id": objId})
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		if result.DeletedCount < 1 {
+			rw.WriteHeader(http.StatusNotFound)
+			response := responses.PointResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "Point with specified ID not found!"}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Point successfully deleted!"}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Punto %s eliminado con éxito\n", pointId)
 	}
 }
