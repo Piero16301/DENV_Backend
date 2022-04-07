@@ -14,5 +14,12 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Linux binary
+Deteccion_Zonas_Dengue_Backend
+
+# Go modules
+go.mod
+go.sum
+
 # GoLand folder
 .idea/
