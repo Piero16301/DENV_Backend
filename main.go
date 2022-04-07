@@ -17,5 +17,8 @@ func main() {
 	// Rutas de usuario
 	routes.UserRoute(router)
 
+	// Rutas de puntos mosquitos
+	routes.PointsRoute(router)
+
 	log.Fatal(http.ListenAndServe(":80", router))
 }

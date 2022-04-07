@@ -16,7 +16,7 @@ import (
 )
 
 var userCollection = configs.GetCollection(configs.DB, "users")
-var validate = validator.New()
+var validateUser = validator.New()
 
 func CreateUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func CreateUser() http.HandlerFunc {
 		var user models.User
 		defer cancel()
 
-		//validate the request body
+		// Validar el body del request
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			response := responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -33,8 +33,8 @@ func CreateUser() http.HandlerFunc {
 			return
 		}
 
-		//use the validator library to validate required fields
-		if validationErr := validate.Struct(&user); validationErr != nil {
+		// Usar la librería para validar los campos requeridos
+		if validationErr := validateUser.Struct(&user); validationErr != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			response := responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
 			_ = json.NewEncoder(rw).Encode(response)
@@ -97,7 +97,7 @@ func EditAUser() http.HandlerFunc {
 
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		//validate the request body
+		// Validar el body del request
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			response := responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
@@ -105,8 +105,8 @@ func EditAUser() http.HandlerFunc {
 			return
 		}
 
-		//use the validator library to validate required fields
-		if validationErr := validate.Struct(&user); validationErr != nil {
+		// Usar la librería para validar los campos requeridos
+		if validationErr := validateUser.Struct(&user); validationErr != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			response := responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
 			_ = json.NewEncoder(rw).Encode(response)
@@ -123,7 +123,7 @@ func EditAUser() http.HandlerFunc {
 			return
 		}
 
-		//get updated user details
+		// Actualizar los campos del usuario
 		var updatedUser models.User
 		if result.MatchedCount == 1 {
 			err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedUser)
@@ -189,7 +189,7 @@ func GetAllUser() http.HandlerFunc {
 			return
 		}
 
-		//reading from the db in an optimal way
+		// Leer de manera óptima la BD
 		defer func(results *mongo.Cursor, ctx context.Context) {
 			_ = results.Close(ctx)
 		}(results, ctx)

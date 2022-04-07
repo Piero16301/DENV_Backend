@@ -30,10 +30,10 @@ func ConnectDB() *mongo.Client {
 	return client
 }
 
-// DB Client instance
+// DB Instancia de Cliente
 var DB = ConnectDB()
 
-// GetCollection getting database collections
+// GetCollection Obtener una colleción de la BD
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	collection := client.Database("golangAPI").Collection(collectionName)
 	return collection
