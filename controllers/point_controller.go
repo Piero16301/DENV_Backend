@@ -226,3 +226,25 @@ func GetAllPoints() http.HandlerFunc {
 		fmt.Println("Puntos leídos con éxito")
 	}
 }
+
+func DeleteAllPoints() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		_, err := pointCollection.DeleteMany(ctx, bson.M{})
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Points successfully deleted!"}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Puntos eliminados con éxito")
+	}
+}
