@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Point struct {
+type Photo struct {
 	Id        primitive.ObjectID `json:"id,omitempty"`
 	Address   string             `json:"address,omitempty" validate:"required"`
 	Comment   string             `json:"comment,omitempty" validate:"required"`

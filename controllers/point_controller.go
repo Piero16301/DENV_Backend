@@ -44,13 +44,14 @@ func CreatePoint() http.HandlerFunc {
 
 		newPoint := models.Point{
 			Id:        primitive.NewObjectID(),
-			Comment:   point.Comment,
 			Address:   point.Address,
+			Comment:   point.Comment,
 			DateTime:  point.DateTime,
-			PhotoURL:  point.PhotoURL,
 			Latitude:  point.Latitude,
 			Longitude: point.Longitude,
+			PhotoURL:  point.PhotoURL,
 		}
+
 		result, err := pointCollection.InsertOne(ctx, newPoint)
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
@@ -58,6 +59,7 @@ func CreatePoint() http.HandlerFunc {
 			_ = json.NewEncoder(rw).Encode(response)
 			return
 		}
+
 		rw.WriteHeader(http.StatusCreated)
 		response := responses.PointResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
 		_ = json.NewEncoder(rw).Encode(response)

@@ -20,5 +20,8 @@ func main() {
 	// Rutas de puntos mosquitos
 	routes.PointsRoute(router)
 
+	// Rutas de fotos mosquitos
+	routes.PhotosRoute(router)
+
 	log.Fatal(http.ListenAndServe(":80", router))
 }
