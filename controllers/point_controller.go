@@ -61,7 +61,7 @@ func CreatePoint() http.HandlerFunc {
 		rw.WriteHeader(http.StatusCreated)
 		response := responses.PointResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
 		_ = json.NewEncoder(rw).Encode(response)
-		fmt.Println("Nuevo usuario creado con éxito")
+		fmt.Println("Nuevo punto creado con éxito")
 	}
 }
 
