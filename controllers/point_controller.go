@@ -121,12 +121,12 @@ func EditAPoint() http.HandlerFunc {
 		}
 
 		update := bson.M{
-			"comment":   point.Comment,
 			"address":   point.Address,
+			"comment":   point.Comment,
 			"datetime":  point.DateTime,
-			"photourl":  point.PhotoURL,
 			"latitude":  point.Latitude,
 			"longitude": point.Longitude,
+			"photourl":  point.PhotoURL,
 		}
 
 		result, err := pointCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
@@ -141,7 +141,6 @@ func EditAPoint() http.HandlerFunc {
 		var updatedPoint models.Point
 		if result.MatchedCount == 1 {
 			err := pointCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedPoint)
-
 			if err != nil {
 				rw.WriteHeader(http.StatusInternalServerError)
 				response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}

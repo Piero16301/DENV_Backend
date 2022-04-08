@@ -91,3 +91,66 @@ func GetAPhoto() http.HandlerFunc {
 		fmt.Printf("Foto %s leída con éxito\n", photoId)
 	}
 }
+
+func EditAPhoto() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		photoId := params["photoId"]
+		var photo models.Photo
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(photoId)
+
+		// Validar el body del request
+		if err := json.NewDecoder(r.Body).Decode(&photo); err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Usar la librería para validar los campos requeridos
+		if validationErr := validatePhoto.Struct(&photo); validationErr != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		update := bson.M{
+			"address":   photo.Address,
+			"comment":   photo.Comment,
+			"datetime":  photo.DateTime,
+			"latitude":  photo.Latitude,
+			"longitude": photo.Longitude,
+			"photourl":  photo.PhotoURL,
+		}
+
+		result, err := photoCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Actualizar los campos de la foto
+		var updatedPhoto models.Photo
+		if result.MatchedCount == 1 {
+			err := photoCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedPhoto)
+			if err != nil {
+				rw.WriteHeader(http.StatusInternalServerError)
+				response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+				_ = json.NewEncoder(rw).Encode(response)
+				return
+			}
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedPhoto}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Datos de la foto %s modificados con éxito\n", photoId)
+	}
+}
