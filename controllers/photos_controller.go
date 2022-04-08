@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"time"
@@ -61,5 +63,31 @@ func CreatePhoto() http.HandlerFunc {
 		response := responses.PhotosResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
 		_ = json.NewEncoder(rw).Encode(response)
 		fmt.Println("Nueva foto creada con éxito")
+	}
+}
+
+func GetAPhoto() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		photoId := params["photoId"]
+		var photo models.Photo
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(photoId)
+
+		err := photoCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&photo)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": photo}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Foto %s leída con éxito\n", photoId)
 	}
 }
