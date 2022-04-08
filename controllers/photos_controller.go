@@ -154,3 +154,35 @@ func EditAPhoto() http.HandlerFunc {
 		fmt.Printf("Datos de la foto %s modificados con éxito\n", photoId)
 	}
 }
+
+func DeleteAPhoto() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(r)
+		photoId := params["photoId"]
+		defer cancel()
+
+		objId, _ := primitive.ObjectIDFromHex(photoId)
+
+		result, err := photoCollection.DeleteOne(ctx, bson.M{"id": objId})
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		if result.DeletedCount < 1 {
+			rw.WriteHeader(http.StatusNotFound)
+			response := responses.PhotosResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "Photo with specified ID not found!"}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Photo successfully deleted!"}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Printf("Foto %s eliminado con éxito\n", photoId)
+	}
+}

@@ -167,7 +167,6 @@ func DeleteAPoint() http.HandlerFunc {
 		objId, _ := primitive.ObjectIDFromHex(pointId)
 
 		result, err := pointCollection.DeleteOne(ctx, bson.M{"id": objId})
-
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}

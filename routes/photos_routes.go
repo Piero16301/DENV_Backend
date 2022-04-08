@@ -9,4 +9,5 @@ func PhotosRoute(router *mux.Router) {
 	router.HandleFunc("/photo", controllers.CreatePhoto()).Methods("POST")
 	router.HandleFunc("/photo/{photoId}", controllers.GetAPhoto()).Methods("GET")
 	router.HandleFunc("/photo/{photoId}", controllers.EditAPhoto()).Methods("PUT")
+	router.HandleFunc("/photo/{photoId}", controllers.DeleteAPhoto()).Methods("DELETE")
 }
