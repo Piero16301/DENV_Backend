@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
@@ -184,5 +185,64 @@ func DeleteAPhoto() http.HandlerFunc {
 		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Photo successfully deleted!"}}
 		_ = json.NewEncoder(rw).Encode(response)
 		fmt.Printf("Foto %s eliminado con éxito\n", photoId)
+	}
+}
+
+func GetAllPhotos() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var photos []models.Photo
+		defer cancel()
+
+		results, err := photoCollection.Find(ctx, bson.M{})
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		// Lectura de manera óptima de la BD
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singlePhoto models.Photo
+			if err = results.Decode(&singlePhoto); err != nil {
+				rw.WriteHeader(http.StatusInternalServerError)
+				response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+				_ = json.NewEncoder(rw).Encode(response)
+			}
+			photos = append(photos, singlePhoto)
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": photos}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Fotos leídas con éxito")
+	}
+}
+
+func DeleteAllPhotos() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		_, err := photoCollection.DeleteMany(ctx, bson.M{})
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
+			_ = json.NewEncoder(rw).Encode(response)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Photos successfully deleted!"}}
+		_ = json.NewEncoder(rw).Encode(response)
+		fmt.Println("Fotos eliminadas con éxito")
 	}
 }

@@ -216,7 +216,6 @@ func GetAllPoints() http.HandlerFunc {
 				response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
 				_ = json.NewEncoder(rw).Encode(response)
 			}
-
 			points = append(points, singlePoint)
 		}
 
@@ -234,7 +233,6 @@ func DeleteAllPoints() http.HandlerFunc {
 		defer cancel()
 
 		_, err := pointCollection.DeleteMany(ctx, bson.M{})
-
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
