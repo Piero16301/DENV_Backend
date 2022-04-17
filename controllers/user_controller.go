@@ -21,7 +21,7 @@ var validateUser = validator.New()
 
 func CreateUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var user models.User
 		defer cancel()
@@ -65,7 +65,7 @@ func CreateUser() http.HandlerFunc {
 
 func GetAUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		userId := params["userId"]
@@ -91,7 +91,7 @@ func GetAUser() http.HandlerFunc {
 
 func EditAUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		userId := params["userId"]
@@ -152,7 +152,7 @@ func EditAUser() http.HandlerFunc {
 
 func DeleteAUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		userId := params["userId"]
@@ -184,7 +184,7 @@ func DeleteAUser() http.HandlerFunc {
 
 func GetAllUser() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var users []models.User
 		defer cancel()

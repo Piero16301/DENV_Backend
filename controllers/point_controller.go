@@ -21,7 +21,7 @@ var validatePoint = validator.New()
 
 func CreatePoint() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var point models.Point
 		defer cancel()
@@ -69,7 +69,7 @@ func CreatePoint() http.HandlerFunc {
 
 func GetAPoint() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		pointId := params["pointId"]
@@ -95,7 +95,7 @@ func GetAPoint() http.HandlerFunc {
 
 func EditAPoint() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		pointId := params["pointId"]
@@ -158,7 +158,7 @@ func EditAPoint() http.HandlerFunc {
 
 func DeleteAPoint() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		pointId := params["pointId"]
@@ -190,7 +190,7 @@ func DeleteAPoint() http.HandlerFunc {
 
 func GetAllPoints() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var points []models.Point
 		defer cancel()
@@ -228,7 +228,7 @@ func GetAllPoints() http.HandlerFunc {
 
 func DeleteAllPoints() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 

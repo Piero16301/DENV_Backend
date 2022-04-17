@@ -21,7 +21,7 @@ var validatePhoto = validator.New()
 
 func CreatePhoto() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var photo models.Photo
 		defer cancel()
@@ -69,7 +69,7 @@ func CreatePhoto() http.HandlerFunc {
 
 func GetAPhoto() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		photoId := params["photoId"]
@@ -95,7 +95,7 @@ func GetAPhoto() http.HandlerFunc {
 
 func EditAPhoto() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		photoId := params["photoId"]
@@ -158,7 +158,7 @@ func EditAPhoto() http.HandlerFunc {
 
 func DeleteAPhoto() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(r)
 		photoId := params["photoId"]
@@ -190,7 +190,7 @@ func DeleteAPhoto() http.HandlerFunc {
 
 func GetAllPhotos() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var photos []models.Photo
 		defer cancel()
@@ -228,7 +228,7 @@ func GetAllPhotos() http.HandlerFunc {
 
 func DeleteAllPhotos() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
