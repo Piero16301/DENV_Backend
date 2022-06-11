@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
@@ -245,61 +246,81 @@ func DeleteCaseReport() http.HandlerFunc {
 	}
 }
 
-//func GetAllCaseReports() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		var points []models.Point
-//		defer cancel()
-//
-//		results, err := caseReportCollection.Find(ctx, bson.M{})
-//
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		// Lectura de manera óptima de la BD
-//		defer func(results *mongo.Cursor, ctx context.Context) {
-//			_ = results.Close(ctx)
-//		}(results, ctx)
-//
-//		for results.Next(ctx) {
-//			var singlePoint models.Point
-//			if err = results.Decode(&singlePoint); err != nil {
-//				rw.WriteHeader(http.StatusInternalServerError)
-//				response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//				_ = json.NewEncoder(rw).Encode(response)
-//			}
-//			points = append(points, singlePoint)
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": points}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Println("Puntos leídos con éxito")
-//	}
-//}
-//
-//func DeleteAllCaseReports() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		defer cancel()
-//
-//		_, err := caseReportCollection.DeleteMany(ctx, bson.M{})
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PointResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PointResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Points successfully deleted!"}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Println("Puntos eliminados con éxito")
-//	}
-//}
+func GetAllCaseReports() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var caseReports []models.CaseReport
+		defer cancel()
+
+		results, err := caseReportCollection.Find(ctx, bson.M{})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.CaseReportResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al obtener los reportes de casos",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singleCaseReport models.CaseReport
+			if err = results.Decode(&singleCaseReport); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.CaseReportResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al obtener los reportes de casos",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			caseReports = append(caseReports, singleCaseReport)
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.CaseReportResponse{
+			Status:  http.StatusOK,
+			Message: "Reportes de casos obtenidos con éxito",
+			Data:    caseReports,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Reportes de casos leídos con éxito")
+	}
+}
+
+func DeleteAllCaseReports() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		_, err := caseReportCollection.DeleteMany(ctx, bson.M{})
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.CaseReportResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al eliminar todos los reportes de casos",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.CaseReportResponse{
+			Status:  http.StatusOK,
+			Message: "Todos los reportes de casos eliminados con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Reportes de casos eliminados con éxito")
+	}
+}
