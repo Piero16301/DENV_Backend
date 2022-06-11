@@ -26,7 +26,7 @@ func ConnectDB() *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Conectado a MongoDB")
+	fmt.Println("Conectado a base de datos DENV en MongoDB")
 	return client
 }
 
@@ -35,6 +35,6 @@ var DB = ConnectDB()
 
 // GetCollection Obtener una colleción de la BD
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("golangAPI").Collection(collectionName)
+	collection := client.Database("DENV").Collection(collectionName)
 	return collection
 }

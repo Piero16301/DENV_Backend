@@ -14,14 +14,11 @@ func main() {
 	// Establecer conexión con MongoDB
 	configs.ConnectDB()
 
-	// Rutas de usuario
-	routes.UserRoute(router)
+	// Rutas para reporte de casos
+	routes.CaseReportRoute(router)
 
-	// Rutas de puntos mosquitos
-	routes.PointsRoute(router)
-
-	// Rutas de fotos mosquitos
-	routes.PhotosRoute(router)
+	// Rutas para zona de propagación
+	routes.PropagationZoneRoute(router)
 
 	log.Fatal(http.ListenAndServe(":80", router))
 }

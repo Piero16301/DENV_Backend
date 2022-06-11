@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-type Photo struct {
+type PropagationZone struct {
 	Id        primitive.ObjectID `json:"id,omitempty"`
-	Address   string             `json:"address,omitempty" validate:"required"`
+	Address   Address            `json:"address,omitempty" validate:"required"`
 	Comment   string             `json:"comment,omitempty" validate:"required"`
-	DateTime  time.Time          `json:"datetime,omitempty" validate:"required"`
+	Datetime  time.Time          `json:"datetime,omitempty" validate:"required"`
 	Latitude  float32            `json:"latitude,omitempty" validate:"required"`
 	Longitude float32            `json:"longitude,omitempty" validate:"required"`
-	PhotoURL  string             `json:"photourl,omitempty" validate:"required"`
+	PhotoURL  string             `json:"photo_url,omitempty" validate:"required"`
 }
