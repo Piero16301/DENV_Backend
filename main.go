@@ -9,16 +9,16 @@ import (
 )
 
 func main() {
+	// Enrutador de endpoints
 	router := mux.NewRouter()
 
 	// Establecer conexión con MongoDB
 	configs.ConnectDB()
 
-	// Rutas para reporte de casos
+	// Rutas para reportes de casos y zonas de propagación
 	routes.CaseReportRoute(router)
-
-	// Rutas para zona de propagación
 	routes.PropagationZoneRoute(router)
 
+	// Iniciar servidor
 	log.Fatal(http.ListenAndServe(":80", router))
 }

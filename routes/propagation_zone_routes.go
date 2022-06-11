@@ -1,14 +1,15 @@
 package routes
 
 import (
+	"Deteccion_Zonas_Dengue_Backend/controllers"
 	"github.com/gorilla/mux"
 )
 
 func PropagationZoneRoute(router *mux.Router) {
-	//router.HandleFunc("/propagation-zone", controllers.CreatePhoto()).Methods("POST")
-	//router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.GetAPhoto()).Methods("GET")
-	//router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.EditAPhoto()).Methods("PUT")
-	//router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.DeleteAPhoto()).Methods("DELETE")
-	//router.HandleFunc("/propagation-zones", controllers.GetAllPhotos()).Methods("GET")
-	//router.HandleFunc("/propagation-zones", controllers.DeleteAllPhotos()).Methods("DELETE")
+	router.HandleFunc("/propagation-zone", controllers.CreatePropagationZone()).Methods("POST")
+	router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.GetPropagationZone()).Methods("GET")
+	router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.EditPropagationZone()).Methods("PUT")
+	router.HandleFunc("/propagation-zone/{propagationZoneId}", controllers.DeletePropagationZone()).Methods("DELETE")
+	router.HandleFunc("/propagation-zones", controllers.GetAllPropagationZones()).Methods("GET")
+	router.HandleFunc("/propagation-zones", controllers.DeleteAllPropagationZones()).Methods("DELETE")
 }

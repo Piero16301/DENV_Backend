@@ -115,7 +115,7 @@ func GetCaseReport() http.HandlerFunc {
 			Data:    caseReport,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Printf("Reporte de caso %s leído con éxito\n", caseReportId)
+		fmt.Printf("Reporte de caso %s obtenido con éxito\n", caseReportId)
 	}
 }
 
@@ -292,7 +292,7 @@ func GetAllCaseReports() http.HandlerFunc {
 			Data:    caseReports,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Reportes de casos leídos con éxito")
+		fmt.Println("Reportes de casos obtenidos con éxito")
 	}
 }
 

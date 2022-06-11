@@ -1,249 +1,326 @@
 package controllers
 
-//
-//import (
-//	"Deteccion_Zonas_Dengue_Backend/configs"
-//	"Deteccion_Zonas_Dengue_Backend/models"
-//	"Deteccion_Zonas_Dengue_Backend/responses"
-//	"context"
-//	"encoding/json"
-//	"fmt"
-//	"github.com/go-playground/validator/v10"
-//	"github.com/gorilla/mux"
-//	"go.mongodb.org/mongo-driver/bson"
-//	"go.mongodb.org/mongo-driver/bson/primitive"
-//	"go.mongodb.org/mongo-driver/mongo"
-//	"net/http"
-//	"time"
-//)
-//
-//var photoCollection = configs.GetCollection(configs.DB, "PropagationZone")
-//var validatePhoto = validator.New()
-//
-//func CreatePhoto() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		var photo models.Photo
-//		defer cancel()
-//
-//		// Validar el body del requests
-//		if err := json.NewDecoder(r.Body).Decode(&photo); err != nil {
-//			rw.WriteHeader(http.StatusBadRequest)
-//			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		// Usar la libería para validar los campos requeridos
-//		if validationErr := validatePhoto.Struct(&photo); validationErr != nil {
-//			rw.WriteHeader(http.StatusBadRequest)
-//			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		newPhoto := models.Photo{
-//			Id:        primitive.NewObjectID(),
-//			Address:   photo.Address,
-//			Comment:   photo.Comment,
-//			DateTime:  photo.DateTime,
-//			Latitude:  photo.Latitude,
-//			Longitude: photo.Longitude,
-//			PhotoURL:  photo.PhotoURL,
-//		}
-//
-//		result, err := photoCollection.InsertOne(ctx, newPhoto)
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		rw.WriteHeader(http.StatusCreated)
-//		response := responses.PhotosResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Println("Nueva foto creada con éxito")
-//	}
-//}
-//
-//func GetAPhoto() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		params := mux.Vars(r)
-//		photoId := params["photoId"]
-//		var photo models.Photo
-//		defer cancel()
-//
-//		objId, _ := primitive.ObjectIDFromHex(photoId)
-//
-//		err := photoCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&photo)
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": photo}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Printf("Foto %s leída con éxito\n", photoId)
-//	}
-//}
-//
-//func EditAPhoto() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		params := mux.Vars(r)
-//		photoId := params["photoId"]
-//		var photo models.Photo
-//		defer cancel()
-//
-//		objId, _ := primitive.ObjectIDFromHex(photoId)
-//
-//		// Validar el body del request
-//		if err := json.NewDecoder(r.Body).Decode(&photo); err != nil {
-//			rw.WriteHeader(http.StatusBadRequest)
-//			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		// Usar la librería para validar los campos requeridos
-//		if validationErr := validatePhoto.Struct(&photo); validationErr != nil {
-//			rw.WriteHeader(http.StatusBadRequest)
-//			response := responses.PhotosResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		update := bson.M{
-//			"address":   photo.Address,
-//			"comment":   photo.Comment,
-//			"datetime":  photo.DateTime,
-//			"latitude":  photo.Latitude,
-//			"longitude": photo.Longitude,
-//			"photourl":  photo.PhotoURL,
-//		}
-//
-//		result, err := photoCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		// Actualizar los campos de la foto
-//		var updatedPhoto models.Photo
-//		if result.MatchedCount == 1 {
-//			err := photoCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedPhoto)
-//			if err != nil {
-//				rw.WriteHeader(http.StatusInternalServerError)
-//				response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//				_ = json.NewEncoder(rw).Encode(response)
-//				return
-//			}
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedPhoto}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Printf("Datos de la foto %s modificados con éxito\n", photoId)
-//	}
-//}
-//
-//func DeleteAPhoto() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		params := mux.Vars(r)
-//		photoId := params["photoId"]
-//		defer cancel()
-//
-//		objId, _ := primitive.ObjectIDFromHex(photoId)
-//
-//		result, err := photoCollection.DeleteOne(ctx, bson.M{"id": objId})
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		if result.DeletedCount < 1 {
-//			rw.WriteHeader(http.StatusNotFound)
-//			response := responses.PhotosResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "Photo with specified ID not found!"}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Photo successfully deleted!"}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Printf("Foto %s eliminado con éxito\n", photoId)
-//	}
-//}
-//
-//func GetAllPhotos() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		var photos []models.Photo
-//		defer cancel()
-//
-//		results, err := photoCollection.Find(ctx, bson.M{})
-//
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		// Lectura de manera óptima de la BD
-//		defer func(results *mongo.Cursor, ctx context.Context) {
-//			_ = results.Close(ctx)
-//		}(results, ctx)
-//
-//		for results.Next(ctx) {
-//			var singlePhoto models.Photo
-//			if err = results.Decode(&singlePhoto); err != nil {
-//				rw.WriteHeader(http.StatusInternalServerError)
-//				response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//				_ = json.NewEncoder(rw).Encode(response)
-//			}
-//			photos = append(photos, singlePhoto)
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": photos}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Println("Fotos leídas con éxito")
-//	}
-//}
-//
-//func DeleteAllPhotos() http.HandlerFunc {
-//	return func(rw http.ResponseWriter, r *http.Request) {
-//		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-//		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//		defer cancel()
-//
-//		_, err := photoCollection.DeleteMany(ctx, bson.M{})
-//		if err != nil {
-//			rw.WriteHeader(http.StatusInternalServerError)
-//			response := responses.PhotosResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}}
-//			_ = json.NewEncoder(rw).Encode(response)
-//			return
-//		}
-//
-//		rw.WriteHeader(http.StatusOK)
-//		response := responses.PhotosResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "Photos successfully deleted!"}}
-//		_ = json.NewEncoder(rw).Encode(response)
-//		fmt.Println("Fotos eliminadas con éxito")
-//	}
-//}
+import (
+	"Deteccion_Zonas_Dengue_Backend/configs"
+	"Deteccion_Zonas_Dengue_Backend/models"
+	"Deteccion_Zonas_Dengue_Backend/responses"
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
+	"time"
+)
+
+var propagationZoneCollection = configs.GetCollection(configs.DB, "PropagationZone")
+var validatePropagationZone = validator.New()
+
+func CreatePropagationZone() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var propagationZone models.PropagationZone
+		defer cancel()
+
+		// Validar que el body está en formato JSON
+		if err := json.NewDecoder(request.Body).Decode(&propagationZone); err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El cuerpo de la solicitud no está en formato JSON",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Se valida que se envíen todos los campos requeridos
+		if validationErr := validatePropagationZone.Struct(&propagationZone); validationErr != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusBadRequest,
+				Message: "No se han enviado todos los campos requeridos",
+				Data:    validationErr.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Se crea instancia de zona de propagación
+		newPropagationZone := models.PropagationZone{
+			Id:        primitive.NewObjectID(),
+			Address:   propagationZone.Address,
+			Comment:   propagationZone.Comment,
+			Datetime:  propagationZone.Datetime,
+			Latitude:  propagationZone.Latitude,
+			Longitude: propagationZone.Longitude,
+			PhotoURL:  propagationZone.PhotoURL,
+		}
+
+		// Se inserta la zona de propagación en MongoDB
+		_, err := propagationZoneCollection.InsertOne(ctx, newPropagationZone)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al crear la zona de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusCreated)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusCreated,
+			Message: "Zona de propagación creada con éxito",
+			Data:    newPropagationZone,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Printf("Zona de propagación %s creada con éxito\n", newPropagationZone.Id.Hex())
+	}
+}
+
+func GetPropagationZone() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		propagationZoneId := params["propagationZoneId"]
+		var propagationZone models.PropagationZone
+		defer cancel()
+
+		objectId, _ := primitive.ObjectIDFromHex(propagationZoneId)
+
+		err := propagationZoneCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&propagationZone)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al obtener la zona de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Zona de propagación obtenida con éxito",
+			Data:    propagationZone,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Printf("Zona de propagación %s obtenida con éxito\n", propagationZoneId)
+	}
+}
+
+func EditPropagationZone() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		propagationZoneId := params["propagationZoneId"]
+		var propagationZone models.PropagationZone
+		defer cancel()
+
+		objectId, _ := primitive.ObjectIDFromHex(propagationZoneId)
+
+		// Validar que el body está en formato JSON
+		if err := json.NewDecoder(request.Body).Decode(&propagationZone); err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El cuerpo de la solicitud no está en formato JSON",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Se valida que se envíen todos los campos requeridos
+		if validationErr := validatePropagationZone.Struct(&propagationZone); validationErr != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusBadRequest,
+				Message: "No se han enviado todos los campos requeridos",
+				Data:    validationErr.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		bsonPropagationZone := bson.M{
+			"address":   propagationZone.Address,
+			"comment":   propagationZone.Comment,
+			"datetime":  propagationZone.Datetime,
+			"latitude":  propagationZone.Latitude,
+			"longitude": propagationZone.Longitude,
+			"photourl":  propagationZone.PhotoURL,
+		}
+
+		result, err := propagationZoneCollection.UpdateOne(ctx, bson.M{"id": objectId}, bson.M{"$set": bsonPropagationZone})
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al actualizar la zona de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Actualizar los campos de la zona de propagación
+		var updatedPropagationZone models.PropagationZone
+		if result.MatchedCount == 1 {
+			err := propagationZoneCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&updatedPropagationZone)
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.PropagationZoneResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al actualizar la zona de propagación",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+				return
+			}
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Zona de propagación actualizada con éxito",
+			Data:    updatedPropagationZone,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Printf("Zona de propagación %s actualizada con éxito\n", propagationZoneId)
+	}
+}
+
+func DeletePropagationZone() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		propagationZoneId := params["propagationZoneId"]
+		defer cancel()
+
+		objectId, _ := primitive.ObjectIDFromHex(propagationZoneId)
+
+		result, err := propagationZoneCollection.DeleteOne(ctx, bson.M{"id": objectId})
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al eliminar la zona de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		if result.DeletedCount < 1 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se encontró la zona de propagación con el ID especificado",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Zona de propagación eliminada con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Printf("Zona de propagación %s eliminada con éxito\n", propagationZoneId)
+	}
+}
+
+func GetAllPropagationZones() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var propagationZones []models.PropagationZone
+		defer cancel()
+
+		results, err := propagationZoneCollection.Find(ctx, bson.M{})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al obtener las zonas de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singlePropagationZone models.PropagationZone
+			if err = results.Decode(&singlePropagationZone); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.PropagationZoneResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al obtener las zonas de propagación",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			propagationZones = append(propagationZones, singlePropagationZone)
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Zonas de propagación obtenidas con éxito",
+			Data:    propagationZones,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Zonas de propagación obtenidas con éxito")
+	}
+}
+
+func DeleteAllPropagationZones() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		_, err := propagationZoneCollection.DeleteMany(ctx, bson.M{})
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al eliminar todas las zonas de propagación",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Todas las zonas de propagación eliminadas con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Zonas de propagación eliminadas con éxito")
+	}
+}
