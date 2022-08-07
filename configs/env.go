@@ -7,14 +7,14 @@ import (
 	"runtime"
 )
 
-func EnvMongoURI() string {
+func GetMongoURI() string {
 	// Detección de SO para la ruta de .env
 	var err error = nil
 
 	if runtime.GOOS == "windows" {
 		err = godotenv.Load(".env")
 	} else {
-		err = godotenv.Load("/home/piero/Deteccion_Zonas_Dengue_Backend/.env")
+		err = godotenv.Load("/home/piero/Toy_Cryptocurrency_Backend/.env")
 	}
 
 	if err != nil {
