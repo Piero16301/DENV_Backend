@@ -14,11 +14,11 @@ func GetMongoURI() string {
 	if runtime.GOOS == "windows" {
 		err = godotenv.Load(".env")
 	} else {
-		err = godotenv.Load("/home/piero/Toy_Cryptocurrency_Backend/.env")
+		err = godotenv.Load("/home/piero/DENV_Backend/.env")
 	}
 
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error al cargar archivo .env")
 	}
 
 	return os.Getenv("MONGOURI")
