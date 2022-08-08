@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"time"
 )
@@ -246,7 +247,7 @@ func DeletePropagationZone() http.HandlerFunc {
 	}
 }
 
-func GetAllPropagationZones() http.HandlerFunc {
+func GetAllPropagationZonesDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -259,7 +260,7 @@ func GetAllPropagationZones() http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			response := responses.PropagationZoneResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al obtener las zonas de propagación",
+				Message: "Ocurrió un error al obtener las zonas de propagación detalladas",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -277,7 +278,7 @@ func GetAllPropagationZones() http.HandlerFunc {
 				writer.WriteHeader(http.StatusInternalServerError)
 				response := responses.PropagationZoneResponse{
 					Status:  http.StatusInternalServerError,
-					Message: "Ocurrió un error al obtener las zonas de propagación",
+					Message: "Ocurrió un error al obtener las zonas de propagación detalladas",
 					Data:    err.Error(),
 				}
 				_ = json.NewEncoder(writer).Encode(response)
@@ -288,11 +289,65 @@ func GetAllPropagationZones() http.HandlerFunc {
 		writer.WriteHeader(http.StatusOK)
 		response := responses.PropagationZoneResponse{
 			Status:  http.StatusOK,
-			Message: "Zonas de propagación obtenidas con éxito",
+			Message: "Zonas de propagación detalladas obtenidas con éxito",
 			Data:    propagationZones,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Zonas de propagación obtenidas con éxito")
+		fmt.Println("Zonas de propagación detalladas obtenidas con éxito")
+	}
+}
+
+func GetAllPropagationZonesSummarized() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var propagationZones []models.PropagationZone
+		defer cancel()
+
+		results, err := propagationZoneCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+			"id":        1,
+			"latitude":  1,
+			"longitude": 1,
+		}})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.PropagationZoneResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al obtener las zonas de propagación resumidas",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singlePropagationZone models.PropagationZone
+			if err = results.Decode(&singlePropagationZone); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.PropagationZoneResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al obtener las zonas de propagación resumidas",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			propagationZones = append(propagationZones, singlePropagationZone)
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.PropagationZoneResponse{
+			Status:  http.StatusOK,
+			Message: "Zonas de propagación resumidas obtenidas con éxito",
+			Data:    propagationZones,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Zonas de propagación resumidas obtenidas con éxito")
 	}
 }
 

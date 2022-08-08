@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"time"
 )
@@ -246,7 +247,7 @@ func DeleteCaseReport() http.HandlerFunc {
 	}
 }
 
-func GetAllCaseReports() http.HandlerFunc {
+func GetAllCaseReportsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -259,7 +260,7 @@ func GetAllCaseReports() http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			response := responses.CaseReportResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al obtener los reportes de casos",
+				Message: "Ocurrió un error al obtener los reportes de casos detallados",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -277,7 +278,7 @@ func GetAllCaseReports() http.HandlerFunc {
 				writer.WriteHeader(http.StatusInternalServerError)
 				response := responses.CaseReportResponse{
 					Status:  http.StatusInternalServerError,
-					Message: "Ocurrió un error al obtener los reportes de casos",
+					Message: "Ocurrió un error al obtener los reportes de casos detallados",
 					Data:    err.Error(),
 				}
 				_ = json.NewEncoder(writer).Encode(response)
@@ -288,11 +289,65 @@ func GetAllCaseReports() http.HandlerFunc {
 		writer.WriteHeader(http.StatusOK)
 		response := responses.CaseReportResponse{
 			Status:  http.StatusOK,
-			Message: "Reportes de casos obtenidos con éxito",
+			Message: "Reportes de casos detallados obtenidos con éxito",
 			Data:    caseReports,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Reportes de casos obtenidos con éxito")
+		fmt.Println("Reportes de casos detallados obtenidos con éxito")
+	}
+}
+
+func GetAllCaseReportsSummarized() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var caseReports []models.CaseReport
+		defer cancel()
+
+		results, err := caseReportCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+			"id":        1,
+			"latitude":  1,
+			"longitude": 1,
+		}})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.CaseReportResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al obtener los reportes de casos resumidos",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		for results.Next(ctx) {
+			var singleCaseReport models.CaseReport
+			if err = results.Decode(&singleCaseReport); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.CaseReportResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al obtener los reportes de casos resumidos",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			caseReports = append(caseReports, singleCaseReport)
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.CaseReportResponse{
+			Status:  http.StatusOK,
+			Message: "Reportes de casos resumidos obtenidos con éxito",
+			Data:    caseReports,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Reportes de casos resumidos obtenidos con éxito")
 	}
 }
 
