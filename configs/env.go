@@ -14,7 +14,7 @@ func GetMongoURI() string {
 	if runtime.GOOS == "windows" {
 		err = godotenv.Load(".env")
 	} else {
-		err = godotenv.Load("/home/piero/DENV_Backend/.env")
+		err = godotenv.Load("/home/ubuntu/DENV_Backend/.env")
 	}
 
 	if err != nil {

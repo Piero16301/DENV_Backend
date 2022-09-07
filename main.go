@@ -11,12 +11,12 @@ func main() {
 	// Enrutador de endpoints
 	router := mux.NewRouter()
 
-	// Rutas para reportes de casos
+	// Rutas para inspección de viviendas (home inspection)
 	routes.CaseReportRoute(router)
 
-	// Rutas para zonas de propagación
+	// Rutas para registro de vector (vector record)
 	routes.PropagationZoneRoute(router)
 
-	// Iniciar servidor
+	// Iniciar servidor en el puerto 80
 	log.Fatal(http.ListenAndServe(":80", router))
 }
