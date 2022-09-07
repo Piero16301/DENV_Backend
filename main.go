@@ -12,10 +12,10 @@ func main() {
 	router := mux.NewRouter()
 
 	// Rutas para inspección de viviendas (home inspection)
-	routes.CaseReportRoute(router)
+	routes.HomeInspectionRoute(router)
 
 	// Rutas para registro de vector (vector record)
-	routes.PropagationZoneRoute(router)
+	routes.VectorRecordRoute(router)
 
 	// Iniciar servidor en el puerto 80
 	log.Fatal(http.ListenAndServe(":80", router))

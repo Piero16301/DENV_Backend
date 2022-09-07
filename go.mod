@@ -1,4 +1,4 @@
-module Deteccion_Zonas_Dengue_Backend
+module DENV_Backend
 
 go 1.18
 

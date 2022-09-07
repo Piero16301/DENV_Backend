@@ -9,5 +9,7 @@ type Address struct {
 	District         string `json:"district,omitempty" validate:"required"`
 	Urbanization     string `json:"urbanization,omitempty" validate:"required"`
 	Street           string `json:"street,omitempty" validate:"required"`
+	Block            string `json:"block,omitempty" validate:"required"`
+	Lot              int    `json:"lot,omitempty" validate:"required"`
 	StreetNumber     int    `json:"streetNumber,omitempty" validate:"required"`
 }
