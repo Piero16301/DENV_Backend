@@ -1,8 +1,8 @@
 package inspection
 
 type TotalContainer struct {
-	InspectedContainers  int `json:"inspected_containers,omitempty" validate:"required"`
-	ContainersSpotlights int `json:"containers_spotlights,omitempty" validate:"required"`
-	TreatedContainers    int `json:"treated_containers,omitempty" validate:"required"`
-	DestroyedContainers  int `json:"destroyed_containers,omitempty" validate:"required"`
+	InspectedContainers  int `json:"inspectedcontainers,omitempty" validate:"required"`
+	ContainersSpotlights int `json:"containersspotlights,omitempty" validate:"required"`
+	TreatedContainers    int `json:"treatedcontainers,omitempty" validate:"required"`
+	DestroyedContainers  int `json:"destroyedcontainers,omitempty" validate:"required"`
 }

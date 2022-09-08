@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"Deteccion_Zonas_Dengue_Backend/configs"
-	"Deteccion_Zonas_Dengue_Backend/models"
-	"Deteccion_Zonas_Dengue_Backend/responses"
+	"DENV_Backend/configs"
+	"DENV_Backend/models"
+	"DENV_Backend/responses"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,20 +17,20 @@ import (
 	"time"
 )
 
-var caseReportCollection = configs.GetCollection(configs.DB, "CaseReport")
-var validateCaseReport = validator.New()
+var vectorRecordCollection = configs.GetCollection(configs.DB, "VectorRecord")
+var validateVectorRecord = validator.New()
 
-func CreateCaseReport() http.HandlerFunc {
+func CreateVectorRecord() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var caseReport models.CaseReport
+		var vectorRecord models.VectorRecord
 		defer cancel()
 
 		// Validar que el body está en formato JSON
-		if err := json.NewDecoder(request.Body).Decode(&caseReport); err != nil {
+		if err := json.NewDecoder(request.Body).Decode(&vectorRecord); err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusBadRequest,
 				Message: "El cuerpo de la solicitud no está en formato JSON",
 				Data:    err.Error(),
@@ -40,9 +40,9 @@ func CreateCaseReport() http.HandlerFunc {
 		}
 
 		// Se valida que se envíen todos los campos requeridos
-		if validationErr := validateCaseReport.Struct(&caseReport); validationErr != nil {
+		if validationErr := validateVectorRecord.Struct(&vectorRecord); validationErr != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusBadRequest,
 				Message: "No se han enviado todos los campos requeridos",
 				Data:    validationErr.Error(),
@@ -51,24 +51,24 @@ func CreateCaseReport() http.HandlerFunc {
 			return
 		}
 
-		// Se crea instancia del reporte de caso
-		newCaseReport := models.CaseReport{
+		// Se crea instancia de registro de vector
+		newVectorRecord := models.VectorRecord{
 			Id:        primitive.NewObjectID(),
-			Address:   caseReport.Address,
-			Comment:   caseReport.Comment,
-			Datetime:  caseReport.Datetime,
-			Latitude:  caseReport.Latitude,
-			Longitude: caseReport.Longitude,
-			PhotoURL:  caseReport.PhotoURL,
+			Address:   vectorRecord.Address,
+			Comment:   vectorRecord.Comment,
+			Datetime:  vectorRecord.Datetime,
+			Latitude:  vectorRecord.Latitude,
+			Longitude: vectorRecord.Longitude,
+			PhotoURL:  vectorRecord.PhotoURL,
 		}
 
-		// Se inserta el reporte de caso en MongoDB
-		_, err := caseReportCollection.InsertOne(ctx, newCaseReport)
+		// Se inserta el registro de vector en MongoDB
+		_, err := vectorRecordCollection.InsertOne(ctx, newVectorRecord)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al crear el reporte de caso",
+				Message: "Ocurrió un error al crear el registro de vector",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -76,33 +76,33 @@ func CreateCaseReport() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusCreated)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusCreated,
-			Message: "Reporte de caso creado con éxito",
-			Data:    newCaseReport,
+			Message: "Registro de vector creado con éxito",
+			Data:    newVectorRecord,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Printf("Reporte de caso %s creado con éxito\n", newCaseReport.Id.Hex())
+		fmt.Printf("Registro de vector %s creado con éxito\n", newVectorRecord.Id.Hex())
 	}
 }
 
-func GetCaseReport() http.HandlerFunc {
+func GetVectorRecord() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(request)
-		caseReportId := params["caseReportId"]
-		var caseReport models.CaseReport
+		vectorRecordId := params["vectorRecordId"]
+		var vectorRecord models.VectorRecord
 		defer cancel()
 
-		objectId, _ := primitive.ObjectIDFromHex(caseReportId)
+		objectId, _ := primitive.ObjectIDFromHex(vectorRecordId)
 
-		err := caseReportCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&caseReport)
+		err := vectorRecordCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&vectorRecord)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al obtener el reporte de caso",
+				Message: "Ocurrió un error al obtener el registro de vector",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -110,31 +110,31 @@ func GetCaseReport() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Reporte de caso obtenido con éxito",
-			Data:    caseReport,
+			Message: "Registro de vector obtenido con éxito",
+			Data:    vectorRecord,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Printf("Reporte de caso %s obtenido con éxito\n", caseReportId)
+		fmt.Printf("Registro de vector %s obtenido con éxito\n", vectorRecordId)
 	}
 }
 
-func EditCaseReport() http.HandlerFunc {
+func EditVectorRecord() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(request)
-		caseReportId := params["caseReportId"]
-		var caseReport models.CaseReport
+		vectorRecordId := params["vectorRecordId"]
+		var vectorRecord models.VectorRecord
 		defer cancel()
 
-		objectId, _ := primitive.ObjectIDFromHex(caseReportId)
+		objectId, _ := primitive.ObjectIDFromHex(vectorRecordId)
 
 		// Validar que el body está en formato JSON
-		if err := json.NewDecoder(request.Body).Decode(&caseReport); err != nil {
+		if err := json.NewDecoder(request.Body).Decode(&vectorRecord); err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusBadRequest,
 				Message: "El cuerpo de la solicitud no está en formato JSON",
 				Data:    err.Error(),
@@ -144,9 +144,9 @@ func EditCaseReport() http.HandlerFunc {
 		}
 
 		// Se valida que se envíen todos los campos requeridos
-		if validationErr := validateCaseReport.Struct(&caseReport); validationErr != nil {
+		if validationErr := validateVectorRecord.Struct(&vectorRecord); validationErr != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusBadRequest,
 				Message: "No se han enviado todos los campos requeridos",
 				Data:    validationErr.Error(),
@@ -155,36 +155,36 @@ func EditCaseReport() http.HandlerFunc {
 			return
 		}
 
-		bsonCaseReport := bson.M{
-			"address":   caseReport.Address,
-			"comment":   caseReport.Comment,
-			"datetime":  caseReport.Datetime,
-			"latitude":  caseReport.Latitude,
-			"longitude": caseReport.Longitude,
-			"photourl":  caseReport.PhotoURL,
+		bsonVectorRecord := bson.M{
+			"address":   vectorRecord.Address,
+			"comment":   vectorRecord.Comment,
+			"datetime":  vectorRecord.Datetime,
+			"latitude":  vectorRecord.Latitude,
+			"longitude": vectorRecord.Longitude,
+			"photourl":  vectorRecord.PhotoURL,
 		}
 
-		result, err := caseReportCollection.UpdateOne(ctx, bson.M{"id": objectId}, bson.M{"$set": bsonCaseReport})
+		result, err := vectorRecordCollection.UpdateOne(ctx, bson.M{"id": objectId}, bson.M{"$set": bsonVectorRecord})
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al actualizar el reporte de caso",
+				Message: "Ocurrió un error al actualizar el registro de vector",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
 			return
 		}
 
-		// Actualizar los campos del reporte de caso
-		var updatedCaseReport models.CaseReport
+		// Actualizar los campos del registro de vector
+		var updatedVectorRecord models.VectorRecord
 		if result.MatchedCount == 1 {
-			err := caseReportCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&updatedCaseReport)
+			err := vectorRecordCollection.FindOne(ctx, bson.M{"id": objectId}).Decode(&updatedVectorRecord)
 			if err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
-				response := responses.CaseReportResponse{
+				response := responses.VectorRecordResponse{
 					Status:  http.StatusInternalServerError,
-					Message: "Ocurrió un error al actualizar el reporte de caso",
+					Message: "Ocurrió un error al actualizar el registro de vector",
 					Data:    err.Error(),
 				}
 				_ = json.NewEncoder(writer).Encode(response)
@@ -193,32 +193,32 @@ func EditCaseReport() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Reporte de caso actualizado con éxito",
-			Data:    updatedCaseReport,
+			Message: "Registro de vector actualizado con éxito",
+			Data:    updatedVectorRecord,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Printf("Reporte de caso %s actualizado con éxito\n", caseReportId)
+		fmt.Printf("Registro de vector %s actualizado con éxito\n", vectorRecordId)
 	}
 }
 
-func DeleteCaseReport() http.HandlerFunc {
+func DeleteVectorRecord() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		params := mux.Vars(request)
-		caseReportId := params["caseReportId"]
+		vectorRecordId := params["vectorRecordId"]
 		defer cancel()
 
-		objectId, _ := primitive.ObjectIDFromHex(caseReportId)
+		objectId, _ := primitive.ObjectIDFromHex(vectorRecordId)
 
-		result, err := caseReportCollection.DeleteOne(ctx, bson.M{"id": objectId})
+		result, err := vectorRecordCollection.DeleteOne(ctx, bson.M{"id": objectId})
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al eliminar el reporte de caso",
+				Message: "Ocurrió un error al eliminar el registro de vector",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -227,9 +227,9 @@ func DeleteCaseReport() http.HandlerFunc {
 
 		if result.DeletedCount < 1 {
 			writer.WriteHeader(http.StatusNotFound)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusNotFound,
-				Message: "No se encontró el reporte de caso con el ID especificado",
+				Message: "No se encontró el registro de vector con el ID especificado",
 				Data:    nil,
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -237,30 +237,30 @@ func DeleteCaseReport() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Reporte de caso eliminado con éxito",
+			Message: "Registro de vector eliminado con éxito",
 			Data:    nil,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Printf("Reporte de caso %s eliminado con éxito\n", caseReportId)
+		fmt.Printf("Registro de vector %s eliminado con éxito\n", vectorRecordId)
 	}
 }
 
-func GetAllCaseReportsDetailed() http.HandlerFunc {
+func GetAllVectorRecordsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var caseReports []models.CaseReport
+		var vectorRecords []models.VectorRecord
 		defer cancel()
 
-		results, err := caseReportCollection.Find(ctx, bson.M{})
+		results, err := vectorRecordCollection.Find(ctx, bson.M{})
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al obtener los reportes de casos detallados",
+				Message: "Ocurrió un error al obtener los registros de vector detallados",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -273,38 +273,38 @@ func GetAllCaseReportsDetailed() http.HandlerFunc {
 		}(results, ctx)
 
 		for results.Next(ctx) {
-			var singleCaseReport models.CaseReport
-			if err = results.Decode(&singleCaseReport); err != nil {
+			var singleVectorRecord models.VectorRecord
+			if err = results.Decode(&singleVectorRecord); err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
-				response := responses.CaseReportResponse{
+				response := responses.VectorRecordResponse{
 					Status:  http.StatusInternalServerError,
-					Message: "Ocurrió un error al obtener los reportes de casos detallados",
+					Message: "Ocurrió un error al obtener los registros de vector detallados",
 					Data:    err.Error(),
 				}
 				_ = json.NewEncoder(writer).Encode(response)
 			}
-			caseReports = append(caseReports, singleCaseReport)
+			vectorRecords = append(vectorRecords, singleVectorRecord)
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Reportes de casos detallados obtenidos con éxito",
-			Data:    caseReports,
+			Message: "Registros de vector detallados obtenidos con éxito",
+			Data:    vectorRecords,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Reportes de casos detallados obtenidos con éxito")
+		fmt.Println("Registros de vector detallados obtenidos con éxito")
 	}
 }
 
-func GetAllCaseReportsSummarized() http.HandlerFunc {
+func GetAllVectorRecordsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var caseReports []models.CaseReport
+		var vectorRecords []models.VectorRecord
 		defer cancel()
 
-		results, err := caseReportCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+		results, err := vectorRecordCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
@@ -312,9 +312,9 @@ func GetAllCaseReportsSummarized() http.HandlerFunc {
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al obtener los reportes de casos resumidos",
+				Message: "Ocurrió un error al obtener los registros de vector resumidos",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -327,42 +327,42 @@ func GetAllCaseReportsSummarized() http.HandlerFunc {
 		}(results, ctx)
 
 		for results.Next(ctx) {
-			var singleCaseReport models.CaseReport
-			if err = results.Decode(&singleCaseReport); err != nil {
+			var singleVectorRecord models.VectorRecord
+			if err = results.Decode(&singleVectorRecord); err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
-				response := responses.CaseReportResponse{
+				response := responses.VectorRecordResponse{
 					Status:  http.StatusInternalServerError,
-					Message: "Ocurrió un error al obtener los reportes de casos resumidos",
+					Message: "Ocurrió un error al obtener los registros de vector resumidos",
 					Data:    err.Error(),
 				}
 				_ = json.NewEncoder(writer).Encode(response)
 			}
-			caseReports = append(caseReports, singleCaseReport)
+			vectorRecords = append(vectorRecords, singleVectorRecord)
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Reportes de casos resumidos obtenidos con éxito",
-			Data:    caseReports,
+			Message: "Registros de vector resumidos obtenidos con éxito",
+			Data:    vectorRecords,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Reportes de casos resumidos obtenidos con éxito")
+		fmt.Println("Registros de vector resumidos obtenidos con éxito")
 	}
 }
 
-func DeleteAllCaseReports() http.HandlerFunc {
+func DeleteAllVectorRecords() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		_, err := caseReportCollection.DeleteMany(ctx, bson.M{})
+		_, err := vectorRecordCollection.DeleteMany(ctx, bson.M{})
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
-			response := responses.CaseReportResponse{
+			response := responses.VectorRecordResponse{
 				Status:  http.StatusInternalServerError,
-				Message: "Ocurrió un error al eliminar todos los reportes de casos",
+				Message: "Ocurrió un error al eliminar todos los registros de vector",
 				Data:    err.Error(),
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -370,12 +370,12 @@ func DeleteAllCaseReports() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		response := responses.CaseReportResponse{
+		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Todos los reportes de casos eliminados con éxito",
+			Message: "Todos los registros de vector eliminados con éxito",
 			Data:    nil,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
-		fmt.Println("Reportes de casos eliminados con éxito")
+		fmt.Println("Registros de vector eliminados con éxito")
 	}
 }

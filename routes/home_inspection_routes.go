@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"Deteccion_Zonas_Dengue_Backend/controllers"
+	"DENV_Backend/controllers"
 	"github.com/gorilla/mux"
 )
 

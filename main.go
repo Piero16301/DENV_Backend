@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Deteccion_Zonas_Dengue_Backend/routes"
+	"DENV_Backend/routes"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
