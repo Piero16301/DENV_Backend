@@ -314,7 +314,7 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var homeInspections []models.HomeInspection
+		var homeInspectionsSummarized []models.HomeInspectionSummarized
 		defer cancel()
 
 		results, err := homeInspectionCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
@@ -340,8 +340,8 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 		}(results, ctx)
 
 		for results.Next(ctx) {
-			var singleHomeInspection models.HomeInspection
-			if err = results.Decode(&singleHomeInspection); err != nil {
+			var singleHomeInspectionSummarized models.HomeInspectionSummarized
+			if err = results.Decode(&singleHomeInspectionSummarized); err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
 				response := responses.HomeInspectionResponse{
 					Status:  http.StatusInternalServerError,
@@ -350,14 +350,14 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 				}
 				_ = json.NewEncoder(writer).Encode(response)
 			}
-			homeInspections = append(homeInspections, singleHomeInspection)
+			homeInspectionsSummarized = append(homeInspectionsSummarized, singleHomeInspectionSummarized)
 		}
 
 		writer.WriteHeader(http.StatusOK)
 		response := responses.HomeInspectionResponse{
 			Status:  http.StatusOK,
 			Message: "Inspecciones de vivienda resumidas obtenidas con éxito",
-			Data:    homeInspections,
+			Data:    homeInspectionsSummarized,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Println("Inspecciones de vivienda resumidas obtenidas con éxito")

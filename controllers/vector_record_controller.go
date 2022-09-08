@@ -301,7 +301,7 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var vectorRecords []models.VectorRecord
+		var vectorRecordsSummarized []models.VectorRecordSummarized
 		defer cancel()
 
 		results, err := vectorRecordCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
@@ -327,8 +327,8 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 		}(results, ctx)
 
 		for results.Next(ctx) {
-			var singleVectorRecord models.VectorRecord
-			if err = results.Decode(&singleVectorRecord); err != nil {
+			var singleVectorRecordSummarized models.VectorRecordSummarized
+			if err = results.Decode(&singleVectorRecordSummarized); err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
 				response := responses.VectorRecordResponse{
 					Status:  http.StatusInternalServerError,
@@ -337,14 +337,14 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 				}
 				_ = json.NewEncoder(writer).Encode(response)
 			}
-			vectorRecords = append(vectorRecords, singleVectorRecord)
+			vectorRecordsSummarized = append(vectorRecordsSummarized, singleVectorRecordSummarized)
 		}
 
 		writer.WriteHeader(http.StatusOK)
 		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
 			Message: "Registros de vector resumidos obtenidos con éxito",
-			Data:    vectorRecords,
+			Data:    vectorRecordsSummarized,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Println("Registros de vector resumidos obtenidos con éxito")
