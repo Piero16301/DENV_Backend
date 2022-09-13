@@ -21,4 +21,5 @@ type HomeInspection struct {
 	TypeContainers    inspection.TypeContainers `json:"typecontainers,omitempty" validate:"required"`
 	TotalContainer    inspection.TotalContainer `json:"totalcontainer,omitempty" validate:"required"`
 	AegyptiFocus      inspection.AegyptiFocus   `json:"aegyptifocus,omitempty" validate:"required"`
+	Larvicide         float32                   `json:"larvicide,omitempty" validate:"required"`
 }

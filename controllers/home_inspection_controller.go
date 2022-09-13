@@ -66,6 +66,7 @@ func CreateHomeInspection() http.HandlerFunc {
 			TypeContainers:    homeInspection.TypeContainers,
 			TotalContainer:    homeInspection.TotalContainer,
 			AegyptiFocus:      homeInspection.AegyptiFocus,
+			Larvicide:         homeInspection.Larvicide,
 		}
 
 		// Se inserta el reporte de caso en MongoDB
@@ -82,10 +83,11 @@ func CreateHomeInspection() http.HandlerFunc {
 		}
 
 		writer.WriteHeader(http.StatusCreated)
+		// return id of created home inspection as an id field
 		response := responses.HomeInspectionResponse{
 			Status:  http.StatusCreated,
 			Message: "Inspección de vivienda creada con éxito",
-			Data:    newHomeInspection,
+			Data:    map[string]interface{}{"id": newHomeInspection.Id},
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Printf("Inspección de vivienda %s creada con éxito\n", newHomeInspection.Id.Hex())
@@ -175,6 +177,7 @@ func EditHomeInspection() http.HandlerFunc {
 			"typecontainers":    homeInspection.TypeContainers,
 			"totalcontainer":    homeInspection.TotalContainer,
 			"aegyptifocus":      homeInspection.AegyptiFocus,
+			"larvicide":         homeInspection.Larvicide,
 		}
 
 		result, err := homeInspectionCollection.UpdateOne(ctx, bson.M{"id": objectId}, bson.M{"$set": bsonHomeInspection})
@@ -209,7 +212,7 @@ func EditHomeInspection() http.HandlerFunc {
 		response := responses.HomeInspectionResponse{
 			Status:  http.StatusOK,
 			Message: "Inspección de vivienda actualizada con éxito",
-			Data:    updatedHomeInspection,
+			Data:    map[string]interface{}{"id": updatedHomeInspection.Id},
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Printf("Inspección de vivienda %s actualizada con éxito\n", homeInspectionId)

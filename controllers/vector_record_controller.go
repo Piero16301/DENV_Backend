@@ -79,7 +79,7 @@ func CreateVectorRecord() http.HandlerFunc {
 		response := responses.VectorRecordResponse{
 			Status:  http.StatusCreated,
 			Message: "Registro de vector creado con éxito",
-			Data:    newVectorRecord,
+			Data:    map[string]interface{}{"id": newVectorRecord.Id},
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Printf("Registro de vector %s creado con éxito\n", newVectorRecord.Id.Hex())
@@ -196,7 +196,7 @@ func EditVectorRecord() http.HandlerFunc {
 		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
 			Message: "Registro de vector actualizado con éxito",
-			Data:    updatedVectorRecord,
+			Data:    map[string]interface{}{"id": updatedVectorRecord.Id},
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Printf("Registro de vector %s actualizado con éxito\n", vectorRecordId)
