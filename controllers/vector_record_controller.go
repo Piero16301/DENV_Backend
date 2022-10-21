@@ -308,6 +308,8 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
+			"datetime":  1,
+			"photourl":  1,
 		}})
 
 		if err != nil {
