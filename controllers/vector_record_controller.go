@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -251,10 +252,12 @@ func GetAllVectorRecordsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
 		var vectorRecords []models.VectorRecord
 		defer cancel()
 
-		results, err := vectorRecordCollection.Find(ctx, bson.M{})
+		results, err := vectorRecordCollection.Find(ctx, bson.M{}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -301,6 +304,8 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
 		var vectorRecordsSummarized []models.VectorRecordSummarized
 		defer cancel()
 
@@ -310,7 +315,7 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 			"longitude": 1,
 			"datetime":  1,
 			"photourl":  1,
-		}})
+		}}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)

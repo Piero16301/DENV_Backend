@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -267,10 +268,12 @@ func GetAllHomeInspectionsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
 		var homeInspections []models.HomeInspection
 		defer cancel()
 
-		results, err := homeInspectionCollection.Find(ctx, bson.M{})
+		results, err := homeInspectionCollection.Find(ctx, bson.M{}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -317,6 +320,8 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		params := mux.Vars(request)
+		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
 		var homeInspectionsSummarized []models.HomeInspectionSummarized
 		defer cancel()
 
@@ -326,7 +331,7 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 			"longitude": 1,
 			"datetime":  1,
 			"photourl":  1,
-		}})
+		}}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)

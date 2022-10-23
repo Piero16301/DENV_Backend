@@ -10,7 +10,7 @@ func HomeInspectionRoute(router *mux.Router) {
 	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.GetHomeInspection()).Methods("GET")
 	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.EditHomeInspection()).Methods("PUT")
 	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.DeleteHomeInspection()).Methods("DELETE")
-	router.HandleFunc("/home-inspections-detailed", controllers.GetAllHomeInspectionsDetailed()).Methods("GET")
-	router.HandleFunc("/home-inspections-summarized", controllers.GetAllHomeInspectionsSummarized()).Methods("GET")
+	router.HandleFunc("/home-inspections-detailed/{skip}", controllers.GetAllHomeInspectionsDetailed()).Methods("GET")
+	router.HandleFunc("/home-inspections-summarized/{skip}", controllers.GetAllHomeInspectionsSummarized()).Methods("GET")
 	router.HandleFunc("/home-inspections", controllers.DeleteAllHomeInspections()).Methods("DELETE")
 }
