@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"DENV_Backend/configs"
+	dbs "DENV_Backend/dbscan"
 	"DENV_Backend/models"
 	"DENV_Backend/responses"
 	"context"
@@ -400,5 +401,96 @@ func DeleteAllHomeInspections() http.HandlerFunc {
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Println("Inspecciones de vivienda eliminadas con éxito")
+	}
+}
+
+func GetHomeInspectionClusters() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		// Increase the timeout to 30 seconds
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+		params := mux.Vars(request)
+		eps, _ := strconv.ParseFloat(params["eps"], 64)
+		minPoints, _ := strconv.Atoi(params["minPoints"])
+
+		defer cancel()
+
+		results, err := homeInspectionCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+			"id":        1,
+			"latitude":  1,
+			"longitude": 1,
+			"datetime":  1,
+			"photourl":  1,
+		}})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al leer las inspecciones de vivienda",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		// Se crea el cluster con los parámetros de entrada
+		var clusterer = dbs.NewDBSCANClusterer(eps, minPoints)
+		var dataPoints []dbs.ClusterablePoint
+
+		for results.Next(ctx) {
+			var singleHomeInspection models.HomeInspectionSummarized
+			if err = results.Decode(&singleHomeInspection); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.HomeInspectionResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al leer las inspecciones de vivienda",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			dataPoints = append(
+				dataPoints,
+				&dbs.NamedPoint{
+					Name: singleHomeInspection.Id.Hex(),
+					Point: []float64{
+						float64(singleHomeInspection.Latitude),
+						float64(singleHomeInspection.Longitude),
+					},
+				})
+		}
+
+		var clusterResult = clusterer.Cluster(dataPoints)
+		var clusters []models.Cluster
+
+		for i, cluster := range clusterResult {
+			var clusterPoints []models.ClusterPoint
+			for _, point := range cluster {
+				clusterPoints = append(clusterPoints, models.ClusterPoint{
+					Id:        point.GetName(),
+					Latitude:  float32(point.GetPoint()[0]),
+					Longitude: float32(point.GetPoint()[1]),
+				})
+			}
+			clusters = append(clusters, models.Cluster{
+				Id:     i + 1,
+				Points: clusterPoints,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.HomeInspectionResponse{
+			Status:  http.StatusOK,
+			Message: "Clusters de inspecciones de vivienda obtenidos con éxito",
+			Data:    clusters,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Clusters de inspecciones de vivienda obtenidos con éxito")
 	}
 }

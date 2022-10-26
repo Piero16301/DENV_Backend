@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"DENV_Backend/configs"
+	dbs "DENV_Backend/dbscan"
 	"DENV_Backend/models"
 	"DENV_Backend/responses"
 	"context"
@@ -384,5 +385,96 @@ func DeleteAllVectorRecords() http.HandlerFunc {
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 		fmt.Println("Registros de vector eliminados con éxito")
+	}
+}
+
+func GetVectorRecordClusters() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		// Increase the timeout to 30 seconds
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+		params := mux.Vars(request)
+		eps, _ := strconv.ParseFloat(params["eps"], 64)
+		minPoints, _ := strconv.Atoi(params["minPoints"])
+
+		defer cancel()
+
+		results, err := vectorRecordCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+			"id":        1,
+			"latitude":  1,
+			"longitude": 1,
+			"datetime":  1,
+			"photourl":  1,
+		}})
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Ocurrió un error al leer los registros de vector",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Lectura de resultados de la base de datos
+		defer func(results *mongo.Cursor, ctx context.Context) {
+			_ = results.Close(ctx)
+		}(results, ctx)
+
+		// Se crea el cluster con los parámetros de entrada
+		var clusterer = dbs.NewDBSCANClusterer(eps, minPoints)
+		var dataPoints []dbs.ClusterablePoint
+
+		for results.Next(ctx) {
+			var singleVectorRecord models.VectorRecordSummarized
+			if err = results.Decode(&singleVectorRecord); err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				response := responses.VectorRecordResponse{
+					Status:  http.StatusInternalServerError,
+					Message: "Ocurrió un error al leer los registros de vector",
+					Data:    err.Error(),
+				}
+				_ = json.NewEncoder(writer).Encode(response)
+			}
+			dataPoints = append(
+				dataPoints,
+				&dbs.NamedPoint{
+					Name: singleVectorRecord.Id.Hex(),
+					Point: []float64{
+						float64(singleVectorRecord.Latitude),
+						float64(singleVectorRecord.Longitude),
+					},
+				})
+		}
+
+		var clusterResult = clusterer.Cluster(dataPoints)
+		var clusters []models.Cluster
+
+		for i, cluster := range clusterResult {
+			var clusterPoints []models.ClusterPoint
+			for _, point := range cluster {
+				clusterPoints = append(clusterPoints, models.ClusterPoint{
+					Id:        point.(*dbs.NamedPoint).Name,
+					Latitude:  float32(point.GetPoint()[0]),
+					Longitude: float32(point.GetPoint()[1]),
+				})
+			}
+			clusters = append(clusters, models.Cluster{
+				Id:     i + 1,
+				Points: clusterPoints,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Clusters obtenidos con éxito",
+			Data:    clusters,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+		fmt.Println("Clusters de registros de vector obtenidos con éxito")
 	}
 }
