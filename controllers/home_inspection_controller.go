@@ -414,7 +414,21 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 		eps, _ := strconv.ParseFloat(params["eps"], 64)
 		minPoints, _ := strconv.Atoi(params["minPoints"])
 
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		defer cancel()
+
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
 
 		if eps <= 0 || minPoints <= 0 {
 			writer.WriteHeader(http.StatusBadRequest)
@@ -427,7 +441,37 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 			return
 		}
 
-		results, err := homeInspectionCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+		// Parse date from string to time.Time 2022-09-08T12:10:26.000+00:00
+		startDateParsed, err := time.Parse(time.RFC3339, startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse(time.RFC3339, endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := homeInspectionCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
