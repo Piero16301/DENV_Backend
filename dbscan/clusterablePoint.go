@@ -3,23 +3,27 @@ package dbscan
 import (
 	"fmt"
 	"sort"
+	"time"
 )
 
 type ClusterablePoint interface {
 	GetPoint() []float64
 	String() string
 	GetName() string
+	GetDate() time.Time
 }
 
 type NamedPoint struct {
 	Name  string
 	Point []float64
+	Date  time.Time
 }
 
-func NewNamedPoint(name string, point []float64) *NamedPoint {
+func NewNamedPoint(name string, point []float64, date time.Time) *NamedPoint {
 	return &NamedPoint{
 		Name:  name,
 		Point: point,
+		Date:  date,
 	}
 }
 
@@ -35,9 +39,15 @@ func (self *NamedPoint) GetName() string {
 	return self.Name
 }
 
+func (self *NamedPoint) GetDate() time.Time {
+	return self.Date
+}
+
 func (self *NamedPoint) Copy() *NamedPoint {
 	var p = new(NamedPoint)
 	p.Name = self.Name
+	p.Point = self.Point
+	p.Date = self.Date
 	copy(p.Point, self.Point)
 	return p
 }

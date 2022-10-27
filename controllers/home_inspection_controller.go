@@ -416,6 +416,17 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 
 		defer cancel()
 
+		if eps <= 0 || minPoints <= 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Los parámetros EPS y Mínimo de Puntos deben ser diferentes a cero",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
 		results, err := homeInspectionCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
@@ -463,6 +474,7 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 						float64(singleHomeInspection.Latitude),
 						float64(singleHomeInspection.Longitude),
 					},
+					Date: singleHomeInspection.Datetime,
 				})
 		}
 
@@ -476,6 +488,7 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 					Id:        point.GetName(),
 					Latitude:  float32(point.GetPoint()[0]),
 					Longitude: float32(point.GetPoint()[1]),
+					Datetime:  point.GetDate(),
 				})
 			}
 			clusters = append(clusters, models.Cluster{
