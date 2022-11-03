@@ -269,12 +269,59 @@ func GetAllHomeInspectionsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 		params := mux.Vars(request)
 		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
+
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		var homeInspections []models.HomeInspection
+
 		defer cancel()
 
-		results, err := homeInspectionCollection.Find(ctx, bson.M{}, options.Find().SetSkip(skip))
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := homeInspectionCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -321,12 +368,59 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 		params := mux.Vars(request)
 		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
+
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		var homeInspectionsSummarized []models.HomeInspectionSummarized
+
 		defer cancel()
 
-		results, err := homeInspectionCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := homeInspectionCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
@@ -441,8 +535,8 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 			return
 		}
 
-		// Parse date from string to time.Time 2022-09-08T12:10:26.000+00:00
-		startDateParsed, err := time.Parse(time.RFC3339, startDate)
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
 			response := responses.HomeInspectionResponse{
@@ -454,7 +548,7 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 			return
 		}
 
-		endDateParsed, err := time.Parse(time.RFC3339, endDate)
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
 			response := responses.HomeInspectionResponse{

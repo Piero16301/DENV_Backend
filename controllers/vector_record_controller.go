@@ -253,12 +253,59 @@ func GetAllVectorRecordsDetailed() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 		params := mux.Vars(request)
 		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
+
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		var vectorRecords []models.VectorRecord
+
 		defer cancel()
 
-		results, err := vectorRecordCollection.Find(ctx, bson.M{}, options.Find().SetSkip(skip))
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := vectorRecordCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, options.Find().SetSkip(skip))
 
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -305,12 +352,59 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 		params := mux.Vars(request)
 		skip, _ := strconv.ParseInt(params["skip"], 0, 64)
+
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		var vectorRecordsSummarized []models.VectorRecordSummarized
+
 		defer cancel()
 
-		results, err := vectorRecordCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := vectorRecordCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
@@ -398,9 +492,64 @@ func GetVectorRecordClusters() http.HandlerFunc {
 		eps, _ := strconv.ParseFloat(params["eps"], 64)
 		minPoints, _ := strconv.Atoi(params["minPoints"])
 
+		startDate := request.URL.Query().Get("startDate")
+		endDate := request.URL.Query().Get("endDate")
+
 		defer cancel()
 
-		results, err := vectorRecordCollection.Find(ctx, bson.M{}, &options.FindOptions{Projection: bson.M{
+		if startDate == "" || endDate == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fechas de inicio o fin no están correctamente especificadas",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		if eps <= 0 || minPoints <= 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Los parámetros EPS y Mínimo de Puntos deben ser diferentes a cero",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Parse date from string to time.Time 2022-10-01T22:49:16.072255
+		startDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", startDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de inicio no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		endDateParsed, err := time.Parse("2006-01-02T15:04:05.000000", endDate)
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Fecha de fin no está correctamente especificada",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		results, err := vectorRecordCollection.Find(ctx, bson.M{
+			"datetime": bson.M{
+				"$gte": startDateParsed,
+				"$lte": endDateParsed,
+			},
+		}, &options.FindOptions{Projection: bson.M{
 			"id":        1,
 			"latitude":  1,
 			"longitude": 1,
@@ -471,7 +620,7 @@ func GetVectorRecordClusters() http.HandlerFunc {
 		writer.WriteHeader(http.StatusOK)
 		response := responses.VectorRecordResponse{
 			Status:  http.StatusOK,
-			Message: "Clusters obtenidos con éxito",
+			Message: "Clusters de registros de vectores obtenidos con éxito",
 			Data:    clusters,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
