@@ -25,7 +25,7 @@ func ConnectDB() *mongo.Client {
 // DB Instancia de Cliente
 var DB = ConnectDB()
 
-// GetCollection Obtener una colleción de la BD
+// GetCollection Obtener una colección de la BD
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	collection := client.Database("DENV").Collection(collectionName)
 	return collection
