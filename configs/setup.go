@@ -1,32 +1,40 @@
 package configs
 
 import (
-	"context"
+	"DENV_Backend/models"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
-	"time"
 )
 
-func ConnectDB() *mongo.Client {
-	serverOptions := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().ApplyURI(GetMongoURI()).SetServerAPIOptions(serverOptions)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, clientOptions)
+func ConnectDB() *gorm.DB {
+	fmt.Println("Conectando a base de datos...")
+
+	pgProperties, err := GetPostgresProperties()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Conexión exitosa a MongoDB")
+
+	client, err := gorm.Open(postgres.Open(pgProperties.GetDSN()), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Conectado a base de datos <" + pgProperties.DBName + "> en " + pgProperties.Host + ":" + pgProperties.Port)
+
+	_ = client.AutoMigrate(
+		&models.HomeInspection{},
+		&models.Address{},
+		&models.Container{},
+		&models.TypeContainer{},
+		&models.HomeCondition{},
+		&models.TotalContainer{},
+		&models.AegyptiFocus{},
+	)
+
 	return client
 }
 
 // DB Instancia de Cliente
 var DB = ConnectDB()
-
-// GetCollection Obtener una colección de la BD
-func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("DENV").Collection(collectionName)
-	return collection
-}

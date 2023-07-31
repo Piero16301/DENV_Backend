@@ -2,19 +2,26 @@ package routes
 
 import (
 	"DENV_Backend/controllers"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
-func HomeInspectionRoute(router *mux.Router) {
-	// CRUD routes
-	router.HandleFunc("/home-inspection", controllers.CreateHomeInspection()).Methods("POST")
-	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.GetHomeInspection()).Methods("GET")
-	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.EditHomeInspection()).Methods("PUT")
-	router.HandleFunc("/home-inspection/{homeInspectionId}", controllers.DeleteHomeInspection()).Methods("DELETE")
-	router.HandleFunc("/home-inspections-detailed/{skip}", controllers.GetAllHomeInspectionsDetailed()).Methods("GET")
-	router.HandleFunc("/home-inspections-summarized/{skip}", controllers.GetAllHomeInspectionsSummarized()).Methods("GET")
-	router.HandleFunc("/home-inspections", controllers.DeleteAllHomeInspections()).Methods("DELETE")
+type HomeInspectionResource struct{}
 
-	// Analysis routes
-	router.HandleFunc("/home-inspection-clusters/{eps}/{minPoints}", controllers.GetHomeInspectionClusters()).Methods("GET")
+// Routes Rutas para inspección de viviendas (home inspection)
+func (hir HomeInspectionResource) Routes() chi.Router {
+	router := chi.NewRouter()
+
+	// CRUD para inspección de viviendas (home inspection)
+	router.Method("POST", "/", controllers.CreateHomeInspection())
+	router.Method("GET", "/{homeInspectionId}", controllers.GetHomeInspection())
+	//router.Method("PUT", "/{homeInspectionId}", controllers.EditHomeInspection())
+	//router.Method("DELETE", "/{homeInspectionId}", controllers.DeleteHomeInspection())
+	//router.Method("GET", "/detailed/{skip}", controllers.GetAllHomeInspectionsDetailed())
+	//router.Method("GET", "/summarized/{skip}", controllers.GetAllHomeInspectionsSummarized())
+	//router.Method("DELETE", "/", controllers.DeleteAllHomeInspections())
+	//
+	//// Endpoint para obtener clusters de inspecciones de viviendas
+	//router.Method("GET", "/clusters/{eps}/{minPoints}", controllers.GetHomeInspectionClusters())
+
+	return router
 }
