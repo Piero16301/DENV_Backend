@@ -25,6 +25,7 @@ func ConnectDB() *gorm.DB {
 
 	_ = client.AutoMigrate(
 		&models.HomeInspection{},
+		&models.VectorRecord{},
 		&models.Address{},
 		&models.Container{},
 		&models.TypeContainer{},

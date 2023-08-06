@@ -1,8 +1,18 @@
 package routes
 
 import (
-	"github.com/gorilla/mux"
+	"DENV_Backend/controllers"
+	"github.com/go-chi/chi/v5"
 )
 
-func VectorRecordRoute(router *mux.Router) {
+type VectorRecordResource struct{}
+
+// Routes Rutas para registro de vectores (vector record)
+func (vrr VectorRecordResource) Routes() chi.Router {
+	router := chi.NewRouter()
+
+	// CRUD para registros de vectores (vector record)
+	router.Method("POST", "/", controllers.CreateVectorRecord())
+
+	return router
 }

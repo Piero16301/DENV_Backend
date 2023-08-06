@@ -16,11 +16,10 @@ func main() {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
-	//router.Use(middleware.URLFormat)
-	//router.Use(render.SetContentType(render.ContentTypeJSON))
 
-	// Rutas para inspección de viviendas (home inspection)
+	// Rutas para inspección de viviendas y registros de vectores
 	router.Mount("/home-inspections", routes.HomeInspectionResource{}.Routes())
+	router.Mount("/vector-records", routes.VectorRecordResource{}.Routes())
 
 	// Iniciar servidor en el puerto 80
 	_ = http.ListenAndServe(":5000", router)
