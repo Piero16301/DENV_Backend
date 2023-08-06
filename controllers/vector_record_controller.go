@@ -5,6 +5,7 @@ import (
 	"DENV_Backend/models"
 	"DENV_Backend/responses"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"net/http"
 )
@@ -48,6 +49,37 @@ func CreateVectorRecord() http.HandlerFunc {
 			Status:  http.StatusCreated,
 			Message: "Registro de vector creado con éxito",
 			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetVectorRecord() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener el ID del registro de vector
+		vectorRecordId := chi.URLParam(request, "vectorRecordId")
+
+		// Validar que el ID del registro de vector exista
+		var vectorRecord models.VectorRecord
+		if configs.DB.Preload("Address").First(&vectorRecord, vectorRecordId).RowsAffected == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se ha encontrado el registro de vector",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Retornar el registro de vector
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Registro de vector obtenido con éxito",
+			Data:    vectorRecord,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}

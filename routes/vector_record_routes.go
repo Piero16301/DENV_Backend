@@ -13,6 +13,7 @@ func (vrr VectorRecordResource) Routes() chi.Router {
 
 	// CRUD para registros de vectores (vector record)
 	router.Method("POST", "/", controllers.CreateVectorRecord())
+	router.Method("GET", "/{vectorRecordId}", controllers.GetVectorRecord())
 
 	return router
 }
