@@ -88,3 +88,88 @@ func GetHomeInspection() http.HandlerFunc {
 		_ = json.NewEncoder(writer).Encode(response)
 	}
 }
+
+func EditHomeInspection() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Obtener el ID de la inspección de vivienda
+		homeInspectionID := chi.URLParam(request, "homeInspectionId")
+
+		// Validar que el ID de la inspección de vivienda exista
+		var homeInspection models.HomeInspection
+		if configs.DB.First(&homeInspection, homeInspectionID).RowsAffected == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se ha encontrado la inspección de vivienda",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Validar que el body está en formato JSON
+		var homeInspectionData models.HomeInspection
+		if err := json.NewDecoder(request.Body).Decode(&homeInspectionData); err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El cuerpo de la solicitud no está en formato JSON",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Actualizar inspección de vivienda
+		configs.DB.Model(&homeInspection).Updates(homeInspectionData)
+
+		// Actualizar fila de dirección
+		configs.DB.First(&homeInspection.Address, homeInspection.AddressID).Updates(homeInspectionData.Address)
+
+		// Actualizar fila de tipo de contenedor
+		configs.DB.First(&homeInspection.TypeContainer, homeInspection.TypeContainerID).Updates(homeInspectionData.TypeContainer)
+
+		// Actualizar fila de tanque elevado
+		configs.DB.First(&homeInspection.TypeContainer.ElevatedTank, homeInspection.TypeContainer.ElevatedTankID).Updates(homeInspectionData.TypeContainer.ElevatedTank)
+
+		// Actualizar fila de tanque bajo
+		configs.DB.First(&homeInspection.TypeContainer.LowTank, homeInspection.TypeContainer.LowTankID).Updates(homeInspectionData.TypeContainer.LowTank)
+
+		// Actualizar fila de barriles cilindro
+		configs.DB.First(&homeInspection.TypeContainer.CylinderBarrel, homeInspection.TypeContainer.CylinderBarrelID).Updates(homeInspectionData.TypeContainer.CylinderBarrel)
+
+		// Actualizar fila de tinas baldes
+		configs.DB.First(&homeInspection.TypeContainer.BucketTub, homeInspection.TypeContainer.BucketTubID).Updates(homeInspectionData.TypeContainer.BucketTub)
+
+		// Actualizar fila de llantas
+		configs.DB.First(&homeInspection.TypeContainer.Tire, homeInspection.TypeContainer.TireID).Updates(homeInspectionData.TypeContainer.Tire)
+
+		// Actualizar fila de floreros
+		configs.DB.First(&homeInspection.TypeContainer.Flower, homeInspection.TypeContainer.FlowerID).Updates(homeInspectionData.TypeContainer.Flower)
+
+		// Actualizar fila de inservibles
+		configs.DB.First(&homeInspection.TypeContainer.Useless, homeInspection.TypeContainer.UselessID).Updates(homeInspectionData.TypeContainer.Useless)
+
+		// Actualizar fila de otros
+		configs.DB.First(&homeInspection.TypeContainer.Others, homeInspection.TypeContainer.OthersID).Updates(homeInspectionData.TypeContainer.Others)
+
+		// Actualizar fila de condiciones de vivienda
+		configs.DB.First(&homeInspection.HomeCondition, homeInspection.HomeConditionID).Updates(homeInspectionData.HomeCondition)
+
+		// Actualizar fila de total de contenedores
+		configs.DB.First(&homeInspection.TotalContainer, homeInspection.TotalContainerID).Updates(homeInspectionData.TotalContainer)
+
+		// Actualizar fila de focos de aegypti
+		configs.DB.First(&homeInspection.AegyptiFocus, homeInspection.AegyptiFocusID).Updates(homeInspectionData.AegyptiFocus)
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.HomeInspectionResponse{
+			Status:  http.StatusOK,
+			Message: "Inspección de vivienda actualizada con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}

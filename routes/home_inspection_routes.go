@@ -14,7 +14,7 @@ func (hir HomeInspectionResource) Routes() chi.Router {
 	// CRUD para inspección de viviendas (home inspection)
 	router.Method("POST", "/", controllers.CreateHomeInspection())
 	router.Method("GET", "/{homeInspectionId}", controllers.GetHomeInspection())
-	//router.Method("PUT", "/{homeInspectionId}", controllers.EditHomeInspection())
+	router.Method("PUT", "/{homeInspectionId}", controllers.EditHomeInspection())
 	//router.Method("DELETE", "/{homeInspectionId}", controllers.DeleteHomeInspection())
 	//router.Method("GET", "/detailed/{skip}", controllers.GetAllHomeInspectionsDetailed())
 	//router.Method("GET", "/summarized/{skip}", controllers.GetAllHomeInspectionsSummarized())
