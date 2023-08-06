@@ -15,6 +15,7 @@ func (vrr VectorRecordResource) Routes() chi.Router {
 	router.Method("POST", "/", controllers.CreateVectorRecord())
 	router.Method("GET", "/{vectorRecordId}", controllers.GetVectorRecord())
 	router.Method("PUT", "/{vectorRecordId}", controllers.EditVectorRecord())
+	router.Method("DELETE", "/{vectorRecordId}", controllers.DeleteVectorRecord())
 
 	return router
 }

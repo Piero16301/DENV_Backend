@@ -133,3 +133,39 @@ func EditVectorRecord() http.HandlerFunc {
 		_ = json.NewEncoder(writer).Encode(response)
 	}
 }
+
+func DeleteVectorRecord() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener el ID del registro de vector
+		vectorRecordId := chi.URLParam(request, "vectorRecordId")
+
+		// Validar que el ID del registro de vector exista
+		var vectorRecord models.VectorRecord
+		if configs.DB.First(&vectorRecord, vectorRecordId).RowsAffected == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se ha encontrado el registro de vector",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Eliminar registro de vector
+		configs.DB.Delete(&vectorRecord)
+
+		// Eliminar fila de dirección
+		configs.DB.Delete(&vectorRecord.Address, vectorRecord.AddressID)
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Registro de vector eliminado con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
