@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"DENV_Backend/configs"
+	"DENV_Backend/dbscan"
 	"DENV_Backend/models"
 	"DENV_Backend/responses"
 	"encoding/json"
@@ -374,6 +375,119 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Se han encontrado " + strconv.Itoa(len(homeInspectionsSummarized)) + " inspecciones de vivienda",
 			Data:    homeInspectionsSummarized,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetHomeInspectionClusters() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Obtener EPS de parámetro de consulta
+		eps, err := strconv.ParseFloat(request.URL.Query().Get("eps"), 64)
+		if err != nil || eps < 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El EPS debe ser un número entero o decimal, mayor o igual a 0",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener mínimo de puntos de parámetro de consulta
+		minPoints, err := strconv.Atoi(request.URL.Query().Get("minPoints"))
+		if err != nil || minPoints < 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El mínimo de puntos debe ser un número entero mayor o igual a 0",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de inicio de parámetro de consulta
+		startDate, err := time.Parse("02-01-2006", request.URL.Query().Get("startDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de inicio debe tener el formato dd-mm-aaaa",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de fin de parámetro de consulta
+		endDate, err := time.Parse("02-01-2006", request.URL.Query().Get("endDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de fin debe tener el formato dd-mm-aaaa",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener inspecciones de vivienda dentro del rango de fechas
+		var homeInspections []models.HomeInspection
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime desc")
+		if len(homeInspections) == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se han encontrado inspecciones de vivienda entre las fechas " + startDate.Format("02-01-2006") + " y " + endDate.Format("02-01-2006"),
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Se crea ek cluster con los parámetros dados
+		var clusterer = dbscan.NewDBSCANClusterer(eps, minPoints)
+		var dataPoints []dbscan.ClusterablePoint
+
+		// Se agregan resultados de la consulta a la lista de puntos
+		for _, homeInspection := range homeInspections {
+			dataPoints = append(dataPoints, &dbscan.IDPoint{
+				ID:    homeInspection.ID,
+				Point: []float64{homeInspection.Latitude, homeInspection.Longitude},
+				Date:  homeInspection.Datetime,
+			})
+		}
+
+		// Se ejecuta el algoritmo de clustering
+		var clusterResult = clusterer.Cluster(dataPoints)
+		var clusters []models.Cluster
+
+		for i, cluster := range clusterResult {
+			var clusterPoints []models.ClusterPoint
+			for _, point := range cluster {
+				clusterPoints = append(clusterPoints, models.ClusterPoint{
+					ID:        point.GetID(),
+					Latitude:  point.GetPoint()[0],
+					Longitude: point.GetPoint()[1],
+					Datetime:  point.GetDate(),
+				})
+			}
+			clusters = append(clusters, models.Cluster{
+				Id:     i + 1,
+				Points: clusterPoints,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.HomeInspectionResponse{
+			Status:  http.StatusOK,
+			Message: "Se han encontrado " + strconv.Itoa(len(clusters)) + " cluster(s) para un total de " + strconv.Itoa(len(homeInspections)) + " inspección(es) de vivienda",
+			Data:    clusters,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}

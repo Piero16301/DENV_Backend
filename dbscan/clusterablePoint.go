@@ -9,43 +9,43 @@ import (
 type ClusterablePoint interface {
 	GetPoint() []float64
 	String() string
-	GetName() string
+	GetID() int64
 	GetDate() time.Time
 }
 
-type NamedPoint struct {
-	Name  string
+type IDPoint struct {
+	ID    int64
 	Point []float64
 	Date  time.Time
 }
 
-func NewNamedPoint(name string, point []float64, date time.Time) *NamedPoint {
-	return &NamedPoint{
-		Name:  name,
+func NewIDPoint(ID int64, point []float64, date time.Time) *IDPoint {
+	return &IDPoint{
+		ID:    ID,
 		Point: point,
 		Date:  date,
 	}
 }
 
-func (self *NamedPoint) String() string {
-	return fmt.Sprintf("\"%s\": %v", self.Name, self.Point)
+func (self *IDPoint) String() string {
+	return fmt.Sprintf("\"%d\": %v", self.ID, self.Point)
 }
 
-func (self *NamedPoint) GetPoint() []float64 {
+func (self *IDPoint) GetPoint() []float64 {
 	return self.Point
 }
 
-func (self *NamedPoint) GetName() string {
-	return self.Name
+func (self *IDPoint) GetID() int64 {
+	return self.ID
 }
 
-func (self *NamedPoint) GetDate() time.Time {
+func (self *IDPoint) GetDate() time.Time {
 	return self.Date
 }
 
-func (self *NamedPoint) Copy() *NamedPoint {
-	var p = new(NamedPoint)
-	p.Name = self.Name
+func (self *IDPoint) Copy() *IDPoint {
+	var p = new(IDPoint)
+	p.ID = self.ID
 	p.Point = self.Point
 	p.Date = self.Date
 	copy(p.Point, self.Point)
@@ -69,7 +69,7 @@ func (self ClusterablePointSlice) Swap(i, j int) {
 // Sort is a convenience method.
 func (self ClusterablePointSlice) Sort() { sort.Sort(self) }
 
-func NamedPointToClusterablePoint(in []*NamedPoint) (out []ClusterablePoint) {
+func NamedPointToClusterablePoint(in []*IDPoint) (out []ClusterablePoint) {
 	out = make([]ClusterablePoint, len(in))
 	for i, v := range in {
 		out[i] = v

@@ -19,10 +19,9 @@ func (hir HomeInspectionResource) Routes() chi.Router {
 
 	router.Method("GET", "/detailed", controllers.GetAllHomeInspectionsDetailed())
 	router.Method("GET", "/summarized", controllers.GetAllHomeInspectionsSummarized())
-	//router.Method("DELETE", "/", controllers.DeleteAllHomeInspections())
 
-	//// Endpoint para obtener clusters de inspecciones de viviendas
-	//router.Method("GET", "/clusters/{eps}/{minPoints}", controllers.GetHomeInspectionClusters())
+	// Endpoint para obtener clusters de inspecciones de viviendas
+	router.Method("GET", "/clusters", controllers.GetHomeInspectionClusters())
 
 	return router
 }
