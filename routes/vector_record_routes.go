@@ -17,5 +17,8 @@ func (vrr VectorRecordResource) Routes() chi.Router {
 	router.Method("PUT", "/{vectorRecordId}", controllers.EditVectorRecord())
 	router.Method("DELETE", "/{vectorRecordId}", controllers.DeleteVectorRecord())
 
+	// Obtener registros de vectores (vector record) por rango de fechas
+	router.Method("GET", "/detailed", controllers.GetAllVectorRecordsDetailed())
+
 	return router
 }

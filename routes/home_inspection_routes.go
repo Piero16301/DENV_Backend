@@ -17,6 +17,7 @@ func (hir HomeInspectionResource) Routes() chi.Router {
 	router.Method("PUT", "/{homeInspectionId}", controllers.EditHomeInspection())
 	router.Method("DELETE", "/{homeInspectionId}", controllers.DeleteHomeInspection())
 
+	// Obtener inspecciones de viviendas (home inspection) por rango de fechas
 	router.Method("GET", "/detailed", controllers.GetAllHomeInspectionsDetailed())
 	router.Method("GET", "/summarized", controllers.GetAllHomeInspectionsSummarized())
 

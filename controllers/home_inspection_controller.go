@@ -281,7 +281,7 @@ func GetAllHomeInspectionsDetailed() http.HandlerFunc {
 
 		// Obtener todas las inspecciones de vivienda
 		var homeInspections []models.HomeInspection
-		configs.DB.Preload("Address").Preload("TypeContainer").Preload("HomeCondition").Preload("TotalContainer").Preload("AegyptiFocus").Where("created_at BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections)
+		configs.DB.Preload("Address").Preload("TypeContainer").Preload("HomeCondition").Preload("TotalContainer").Preload("AegyptiFocus").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections)
 
 		// Cargar datos de tipo de contenedor
 		for i := 0; i < len(homeInspections); i++ {

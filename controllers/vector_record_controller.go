@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 var validateVectorRecord = validator.New()
@@ -165,6 +167,62 @@ func DeleteVectorRecord() http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Registro de vector eliminado con éxito",
 			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetAllVectorRecordsDetailed() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener fecha de inicio de parámetro de consulta
+		startDate, err := time.Parse("02-01-2006", request.URL.Query().Get("startDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de inicio debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de fin de parámetro de consulta
+		endDate, err := time.Parse("02-01-2006", request.URL.Query().Get("endDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de fin debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener todos los registros de vector
+		var vectorRecords []models.VectorRecord
+		configs.DB.Preload("Address").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&vectorRecords)
+
+		// Validar que existan registros de vector
+		if len(vectorRecords) == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se han encontrado registros de vector",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Se han encontrado " + strconv.Itoa(len(vectorRecords)) + " registros de vector",
+			Data:    vectorRecords,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}
