@@ -173,3 +173,75 @@ func EditHomeInspection() http.HandlerFunc {
 		_ = json.NewEncoder(writer).Encode(response)
 	}
 }
+
+func DeleteHomeInspection() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Obtener el ID de la inspección de vivienda
+		homeInspectionID := chi.URLParam(request, "homeInspectionId")
+
+		// Validar que el ID de la inspección de vivienda exista
+		var homeInspection models.HomeInspection
+		if configs.DB.First(&homeInspection, homeInspectionID).RowsAffected == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se ha encontrado la inspección de vivienda",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Eliminar inspección de vivienda
+		configs.DB.Delete(&homeInspection)
+
+		// Eliminar fila de dirección
+		configs.DB.Delete(&homeInspection.Address, homeInspection.AddressID)
+
+		// Eliminar fila de tipo de contenedor
+		configs.DB.Delete(&homeInspection.TypeContainer, homeInspection.TypeContainerID)
+
+		// Eliminar fila de tanque elevado
+		configs.DB.Delete(&homeInspection.TypeContainer.ElevatedTank, homeInspection.TypeContainer.ElevatedTankID)
+
+		// Eliminar fila de tanque bajo
+		configs.DB.Delete(&homeInspection.TypeContainer.LowTank, homeInspection.TypeContainer.LowTankID)
+
+		// Eliminar fila de barriles cilindro
+		configs.DB.Delete(&homeInspection.TypeContainer.CylinderBarrel, homeInspection.TypeContainer.CylinderBarrelID)
+
+		// Eliminar fila de tinas baldes
+		configs.DB.Delete(&homeInspection.TypeContainer.BucketTub, homeInspection.TypeContainer.BucketTubID)
+
+		// Eliminar fila de llantas
+		configs.DB.Delete(&homeInspection.TypeContainer.Tire, homeInspection.TypeContainer.TireID)
+
+		// Eliminar fila de floreros
+		configs.DB.Delete(&homeInspection.TypeContainer.Flower, homeInspection.TypeContainer.FlowerID)
+
+		// Eliminar fila de inservibles
+		configs.DB.Delete(&homeInspection.TypeContainer.Useless, homeInspection.TypeContainer.UselessID)
+
+		// Eliminar fila de otros
+		configs.DB.Delete(&homeInspection.TypeContainer.Others, homeInspection.TypeContainer.OthersID)
+
+		// Eliminar fila de condiciones de vivienda
+		configs.DB.Delete(&homeInspection.HomeCondition, homeInspection.HomeConditionID)
+
+		// Eliminar fila de total de contenedores
+		configs.DB.Delete(&homeInspection.TotalContainer, homeInspection.TotalContainerID)
+
+		// Eliminar fila de focos de aegypti
+		configs.DB.Delete(&homeInspection.AegyptiFocus, homeInspection.AegyptiFocusID)
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.HomeInspectionResponse{
+			Status:  http.StatusOK,
+			Message: "Inspección de vivienda eliminada con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
