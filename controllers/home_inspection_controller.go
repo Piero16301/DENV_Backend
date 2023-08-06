@@ -279,9 +279,9 @@ func GetAllHomeInspectionsDetailed() http.HandlerFunc {
 			return
 		}
 
-		// Obtener todas las inspecciones de vivienda
+		// Obtener inspecciones de vivienda dentro del rango de fechas
 		var homeInspections []models.HomeInspection
-		configs.DB.Preload("Address").Preload("TypeContainer").Preload("HomeCondition").Preload("TotalContainer").Preload("AegyptiFocus").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections)
+		configs.DB.Preload("Address").Preload("TypeContainer").Preload("HomeCondition").Preload("TotalContainer").Preload("AegyptiFocus").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime DESC")
 
 		// Cargar datos de tipo de contenedor
 		for i := 0; i < len(homeInspections); i++ {
@@ -342,9 +342,9 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 			return
 		}
 
-		// Obtener inspecciones de vivienda dentro del rango de fechas y con el salto de página
+		// Obtener inspecciones de vivienda dentro del rango de fechas
 		var homeInspections []models.HomeInspection
-		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime desc")
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime DESC")
 
 		// Validar que existan inspecciones de vivienda
 		if len(homeInspections) == 0 {

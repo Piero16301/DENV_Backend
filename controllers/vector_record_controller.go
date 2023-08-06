@@ -202,9 +202,9 @@ func GetAllVectorRecordsDetailed() http.HandlerFunc {
 			return
 		}
 
-		// Obtener todos los registros de vector
+		// Obtener registros de vector dentro del rango de fechas
 		var vectorRecords []models.VectorRecord
-		configs.DB.Preload("Address").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&vectorRecords)
+		configs.DB.Preload("Address").Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&vectorRecords).Order("datetime DESC")
 
 		// Validar que existan registros de vector
 		if len(vectorRecords) == 0 {
@@ -223,6 +223,74 @@ func GetAllVectorRecordsDetailed() http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Se han encontrado " + strconv.Itoa(len(vectorRecords)) + " registros de vector",
 			Data:    vectorRecords,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetAllVectorRecordsSummarized() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener fecha de inicio de parámetro de consulta
+		startDate, err := time.Parse("02-01-2006", request.URL.Query().Get("startDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de inicio debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de fin de parámetro de consulta
+		endDate, err := time.Parse("02-01-2006", request.URL.Query().Get("endDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de fin debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener registros de vector dentro del rango de fechas
+		var vectorRecords []models.VectorRecord
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&vectorRecords).Order("datetime DESC")
+
+		// Validar que existan registros de vector
+		if len(vectorRecords) == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se han encontrado registros de vector",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Crear estructura de respuesta
+		var vectorRecordsSummarized []models.VectorRecordSummarized
+		for _, vectorRecord := range vectorRecords {
+			vectorRecordsSummarized = append(vectorRecordsSummarized, models.VectorRecordSummarized{
+				ID:        vectorRecord.ID,
+				Latitude:  vectorRecord.Latitude,
+				Longitude: vectorRecord.Longitude,
+				Datetime:  vectorRecord.Datetime,
+				PhotoUrl:  vectorRecord.PhotoUrl,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Se han encontrado " + strconv.Itoa(len(vectorRecords)) + " registros de vector",
+			Data:    vectorRecordsSummarized,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}

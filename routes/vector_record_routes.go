@@ -19,6 +19,7 @@ func (vrr VectorRecordResource) Routes() chi.Router {
 
 	// Obtener registros de vectores (vector record) por rango de fechas
 	router.Method("GET", "/detailed", controllers.GetAllVectorRecordsDetailed())
+	router.Method("GET", "/summarized", controllers.GetAllVectorRecordsSummarized())
 
 	return router
 }
