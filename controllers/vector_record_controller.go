@@ -84,3 +84,52 @@ func GetVectorRecord() http.HandlerFunc {
 		_ = json.NewEncoder(writer).Encode(response)
 	}
 }
+
+func EditVectorRecord() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener el ID del registro de vector
+		vectorRecordId := chi.URLParam(request, "vectorRecordId")
+
+		// Validar que el ID del registro de vector exista
+		var vectorRecord models.VectorRecord
+		if configs.DB.First(&vectorRecord, vectorRecordId).RowsAffected == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se ha encontrado el registro de vector",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Validar que el body está en formato JSON
+		var vectorRecordData models.VectorRecord
+		if err := json.NewDecoder(request.Body).Decode(&vectorRecordData); err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El cuerpo de la solicitud debe estar en formato JSON",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Actualizar registro de vector
+		configs.DB.Model(&vectorRecord).Updates(vectorRecordData)
+
+		// Actualizar fila de dirección
+		configs.DB.First(&vectorRecord.Address, vectorRecord.AddressID).Updates(vectorRecordData.Address)
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Registro de vector actualizado con éxito",
+			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
