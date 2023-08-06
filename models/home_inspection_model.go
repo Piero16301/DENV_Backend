@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+type HomeInspectionSummarized struct {
+	ID        int64     `json:"id"`
+	Latitude  float64   `json:"latitude" validate:"required"`
+	Longitude float64   `json:"longitude" validate:"required"`
+	Datetime  time.Time `json:"datetime" validate:"required"`
+	PhotoUrl  string    `json:"photoUrl" validate:"required"`
+}
+
 type HomeInspection struct {
 	gorm.Model
 	ID                int64          `json:"id"`

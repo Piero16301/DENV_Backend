@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 var validateHomeInspection = validator.New()
@@ -241,6 +243,74 @@ func DeleteHomeInspection() http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Inspección de vivienda eliminada con éxito",
 			Data:    nil,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetAllHomeInspectionsSummarized() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Obtener fecha de inicio de parámetro de consulta
+		startDate, err := time.Parse("02-01-2006", request.URL.Query().Get("startDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de inicio debe tener el formato dd-mm-aaaa",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de fin de parámetro de consulta
+		endDate, err := time.Parse("02-01-2006", request.URL.Query().Get("endDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de fin debe tener el formato dd-mm-aaaa",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener inspecciones de vivienda dentro del rango de fechas y con el salto de página
+		var homeInspections []models.HomeInspection
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime desc")
+
+		// Validar que existan inspecciones de vivienda
+		if len(homeInspections) == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.HomeInspectionResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se han encontrado inspecciones de vivienda",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Crear estructura de respuesta
+		var homeInspectionsSummarized []models.HomeInspectionSummarized
+		for _, homeInspection := range homeInspections {
+			homeInspectionsSummarized = append(homeInspectionsSummarized, models.HomeInspectionSummarized{
+				ID:        homeInspection.ID,
+				Latitude:  homeInspection.Latitude,
+				Longitude: homeInspection.Longitude,
+				Datetime:  homeInspection.Datetime,
+				PhotoUrl:  homeInspection.PhotoUrl,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.HomeInspectionResponse{
+			Status:  http.StatusOK,
+			Message: "Se han encontrado " + strconv.Itoa(len(homeInspectionsSummarized)) + " inspecciones de vivienda",
+			Data:    homeInspectionsSummarized,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}
