@@ -386,11 +386,11 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 
 		// Obtener EPS de parámetro de consulta
 		eps, err := strconv.ParseFloat(request.URL.Query().Get("eps"), 64)
-		if err != nil || eps < 0 {
+		if err != nil || eps <= 0 {
 			writer.WriteHeader(http.StatusBadRequest)
 			response := responses.HomeInspectionResponse{
 				Status:  http.StatusBadRequest,
-				Message: "El EPS debe ser un número entero o decimal, mayor o igual a 0",
+				Message: "El EPS debe ser un número entero o decimal, mayor a cero",
 				Data:    nil,
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -399,11 +399,11 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 
 		// Obtener mínimo de puntos de parámetro de consulta
 		minPoints, err := strconv.Atoi(request.URL.Query().Get("minPoints"))
-		if err != nil || minPoints < 0 {
+		if err != nil || minPoints <= 0 {
 			writer.WriteHeader(http.StatusBadRequest)
 			response := responses.HomeInspectionResponse{
 				Status:  http.StatusBadRequest,
-				Message: "El mínimo de puntos debe ser un número entero mayor o igual a 0",
+				Message: "El mínimo de puntos debe ser un número entero mayor a cero",
 				Data:    nil,
 			}
 			_ = json.NewEncoder(writer).Encode(response)
@@ -438,7 +438,7 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 
 		// Obtener inspecciones de vivienda dentro del rango de fechas
 		var homeInspections []models.HomeInspection
-		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime desc")
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&homeInspections).Order("datetime DESC")
 		if len(homeInspections) == 0 {
 			writer.WriteHeader(http.StatusNotFound)
 			response := responses.HomeInspectionResponse{
@@ -450,7 +450,7 @@ func GetHomeInspectionClusters() http.HandlerFunc {
 			return
 		}
 
-		// Se crea ek cluster con los parámetros dados
+		// Se crea el cluster con los parámetros dados
 		var clusterer = dbscan.NewDBSCANClusterer(eps, minPoints)
 		var dataPoints []dbscan.ClusterablePoint
 

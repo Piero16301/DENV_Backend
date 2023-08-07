@@ -21,5 +21,8 @@ func (vrr VectorRecordResource) Routes() chi.Router {
 	router.Method("GET", "/detailed", controllers.GetAllVectorRecordsDetailed())
 	router.Method("GET", "/summarized", controllers.GetAllVectorRecordsSummarized())
 
+	// Endpoint para obtener clusters de registros de vectores
+	router.Method("GET", "/clusters", controllers.GetVectorRecordClusters())
+
 	return router
 }

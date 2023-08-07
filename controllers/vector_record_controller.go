@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"DENV_Backend/configs"
+	"DENV_Backend/dbscan"
 	"DENV_Backend/models"
 	"DENV_Backend/responses"
 	"encoding/json"
@@ -291,6 +292,119 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Se han encontrado " + strconv.Itoa(len(vectorRecords)) + " registros de vector",
 			Data:    vectorRecordsSummarized,
+		}
+		_ = json.NewEncoder(writer).Encode(response)
+	}
+}
+
+func GetVectorRecordClusters() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		// Obtener EPS de parámetro de consulta
+		eps, err := strconv.ParseFloat(request.URL.Query().Get("eps"), 64)
+		if err != nil || eps <= 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El EPS debe ser un número entero o decimal, mayor a cero",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener mínimo de puntos de parámetro de consulta
+		minPoints, err := strconv.Atoi(request.URL.Query().Get("minPoints"))
+		if err != nil || minPoints <= 0 {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "El mínimo de puntos debe ser un número entero mayor a cero",
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de inicio de parámetro de consulta
+		startDate, err := time.Parse("02-01-2006", request.URL.Query().Get("startDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de inicio debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener fecha de fin de parámetro de consulta
+		endDate, err := time.Parse("02-01-2006", request.URL.Query().Get("endDate"))
+		if err != nil {
+			writer.WriteHeader(http.StatusBadRequest)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusBadRequest,
+				Message: "La fecha de fin debe estar en formato dd-mm-aaaa",
+				Data:    err.Error(),
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Obtener registros de vector dentro del rango de fechas
+		var vectorRecords []models.VectorRecord
+		configs.DB.Where("datetime BETWEEN ? AND ?", startDate, endDate).Find(&vectorRecords).Order("datetime DESC")
+		if len(vectorRecords) == 0 {
+			writer.WriteHeader(http.StatusNotFound)
+			response := responses.VectorRecordResponse{
+				Status:  http.StatusNotFound,
+				Message: "No se han encontrado registros de vector entre las fechas " + startDate.Format("02-01-2006") + " y " + endDate.Format("02-01-2006"),
+				Data:    nil,
+			}
+			_ = json.NewEncoder(writer).Encode(response)
+			return
+		}
+
+		// Se crea el cluster con los parámetros dados
+		var clusterer = dbscan.NewDBSCANClusterer(eps, minPoints)
+		var dataPoints []dbscan.ClusterablePoint
+
+		// Se agregan resultados de la consulta a la lista de puntos
+		for _, vectorRecord := range vectorRecords {
+			dataPoints = append(dataPoints, &dbscan.IDPoint{
+				ID:    vectorRecord.ID,
+				Point: []float64{vectorRecord.Latitude, vectorRecord.Longitude},
+				Date:  vectorRecord.Datetime,
+			})
+		}
+
+		// Se ejecuta el algoritmo de clustering
+		var clusterResult = clusterer.Cluster(dataPoints)
+		var clusters []models.Cluster
+
+		for i, cluster := range clusterResult {
+			var clusterPoints []models.ClusterPoint
+			for _, point := range cluster {
+				clusterPoints = append(clusterPoints, models.ClusterPoint{
+					ID:        point.GetID(),
+					Latitude:  point.GetPoint()[0],
+					Longitude: point.GetPoint()[1],
+					Datetime:  point.GetDate(),
+				})
+			}
+			clusters = append(clusters, models.Cluster{
+				Id:     i + 1,
+				Points: clusterPoints,
+			})
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		response := responses.VectorRecordResponse{
+			Status:  http.StatusOK,
+			Message: "Se han encontrado " + strconv.Itoa(len(clusters)) + " cluster(s) para un total de " + strconv.Itoa(len(vectorRecords)) + " registro(s) de vector",
+			Data:    clusters,
 		}
 		_ = json.NewEncoder(writer).Encode(response)
 	}
