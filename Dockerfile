@@ -10,10 +10,10 @@ COPY ${PWD} /app
 RUN go mod download
 
 # Build the binary.
-RUN go build -o /denv-project-backend
+RUN go build -o /denv-backend
 
 # Run backend on port 8080
 EXPOSE 8080
 
 # Run the web service on container startup
-CMD ["/denv-project-backend"]
+CMD ["/denv-backend"]
