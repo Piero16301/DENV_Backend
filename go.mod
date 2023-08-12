@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.15.0
+	github.com/rs/cors v1.9.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.3
 )
