@@ -292,14 +292,7 @@ func GetAllHomeInspectionsDetailed() http.HandlerFunc {
 
 		// Validar que existan inspecciones de vivienda
 		if len(homeInspections) == 0 {
-			writer.WriteHeader(http.StatusNotFound)
-			response := responses.HomeInspectionResponse{
-				Status:  http.StatusNotFound,
-				Message: "No se han encontrado inspecciones de vivienda",
-				Data:    nil,
-			}
-			_ = json.NewEncoder(writer).Encode(response)
-			return
+			homeInspections = []models.HomeInspection{}
 		}
 
 		writer.WriteHeader(http.StatusOK)
@@ -348,14 +341,7 @@ func GetAllHomeInspectionsSummarized() http.HandlerFunc {
 
 		// Validar que existan inspecciones de vivienda
 		if len(homeInspections) == 0 {
-			writer.WriteHeader(http.StatusNotFound)
-			response := responses.HomeInspectionResponse{
-				Status:  http.StatusNotFound,
-				Message: "No se han encontrado inspecciones de vivienda",
-				Data:    nil,
-			}
-			_ = json.NewEncoder(writer).Encode(response)
-			return
+			homeInspections = []models.HomeInspection{}
 		}
 
 		// Crear estructura de respuesta

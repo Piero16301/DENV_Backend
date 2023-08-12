@@ -209,14 +209,7 @@ func GetAllVectorRecordsDetailed() http.HandlerFunc {
 
 		// Validar que existan registros de vector
 		if len(vectorRecords) == 0 {
-			writer.WriteHeader(http.StatusNotFound)
-			response := responses.VectorRecordResponse{
-				Status:  http.StatusNotFound,
-				Message: "No se han encontrado registros de vector",
-				Data:    nil,
-			}
-			_ = json.NewEncoder(writer).Encode(response)
-			return
+			vectorRecords = []models.VectorRecord{}
 		}
 
 		writer.WriteHeader(http.StatusOK)
@@ -265,14 +258,7 @@ func GetAllVectorRecordsSummarized() http.HandlerFunc {
 
 		// Validar que existan registros de vector
 		if len(vectorRecords) == 0 {
-			writer.WriteHeader(http.StatusNotFound)
-			response := responses.VectorRecordResponse{
-				Status:  http.StatusNotFound,
-				Message: "No se han encontrado registros de vector",
-				Data:    nil,
-			}
-			_ = json.NewEncoder(writer).Encode(response)
-			return
+			vectorRecords = []models.VectorRecord{}
 		}
 
 		// Crear estructura de respuesta

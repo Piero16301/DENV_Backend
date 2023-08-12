@@ -22,5 +22,5 @@ func main() {
 	router.Mount("/vector-records", routes.VectorRecordResource{}.Routes())
 
 	// Iniciar servidor en el puerto 80
-	_ = http.ListenAndServe(":5000", router)
+	_ = http.ListenAndServe(":8080", router)
 }
