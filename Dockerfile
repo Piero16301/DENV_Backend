@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine
+FROM golang:1.20-alpine
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -10,10 +10,10 @@ COPY ${PWD} /app
 RUN go mod download
 
 # Build the binary.
-RUN go build -o /denv-backend
+RUN go build -o /maersk-entregas-backend
 
 # Run backend on port 8080
 EXPOSE 8080
 
 # Run the web service on container startup
-CMD ["/dev-backend"]
+CMD ["/maersk-entregas-backend"]
