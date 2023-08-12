@@ -10,10 +10,10 @@ COPY ${PWD} /app
 RUN go mod download
 
 # Build the binary.
-RUN go build -o /maersk-entregas-backend
+RUN go build -o /denv-project-backend
 
 # Run backend on port 8080
 EXPOSE 8080
 
 # Run the web service on container startup
-CMD ["/maersk-entregas-backend"]
+CMD ["/denv-project-backend"]
