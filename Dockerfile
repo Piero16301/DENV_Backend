@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine
+FROM golang:1.19-alpine
 
 # Create and change to the app directory.
 WORKDIR /app
